@@ -2,7 +2,7 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 
 export function parseCurrency (amount) {
-  return Number(new Intl.NumberFormat('es-mx').format(amount)).toFixed(2);
+  return Number(new Intl.NumberFormat('es-MX').format(amount)).toFixed(2);
 };
 
 export function showAlert(options = {}) {

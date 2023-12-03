@@ -1,33 +1,69 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-
-import { SERVER } from '../../config';
 
 import { showAlert } from '../../common';
-import ModalOrder from './modal-order'
+import getAxios from '../../common/axios';
+import ModalOrder from './modal-order';
+import _ from 'lodash';
+
+const emptyOrder = {
+  id: 0,
+  customerName: '',
+  address: '',
+  eventDate: '',
+  returnedAt: '',
+  isCancelled: false,
+  items: []
+}
 
 export const Orders = () => {
-  const url = `${SERVER.url}${SERVER.apiPath}`;
+  const axios = getAxios();
   const [orders, setOrders] = useState([]);
-  const [orderItems, setOrderItems] = useState([]);
-  const [id, setId] = useState(0);
-  const [customerName, setCustomerName] = useState('');
-  const [address, setAddress] = useState('');
-  const [eventDate, setEventDate] = useState('');
-  const [returnedAt, setReturnedAt] = useState('');
-  const [isCancelled, setIsCancelled] = useState(false);
   const [operation, setOperation] = useState(1);
   const [title, setTitle] = useState('');
-  const [items, setItems] = useState([]);
+  const [products, setProducts] = useState([]); // products = db items
+  const [state, setState] = useState({
+    myOrder: _.cloneDeep(emptyOrder),
+    refresh: 0
+  });
+  const orderStatuses = {
+    orderReceived: 'ORDEN_RECIBIDA',
+    processingOrder: 'PROCESANDO_ORDEN',
+    cancelled: 'ORDEN_CANCELADA',
+    completed: 'ORDEN_COMPLETADA'
+  };
+
+  const getOrderStatus = function ({
+    isCancelled,
+    returnedAt
+  }) {
+    if (isCancelled) {
+      return orderStatuses.cancelled;
+    } else if (returnedAt) {
+      return orderStatuses.completed;
+    } else {
+      return orderStatuses.orderReceived;
+    };
+  };
+
+  const { myOrder, refresh } = state
+  let {
+    id,
+    customerName,
+    address,
+    eventDate,
+    returnedAt,
+    isCancelled,
+    items
+  } = myOrder
 
   const getOrders = async function () {
-    const response = await axios.get(`${url}/order`);
+    const response = await axios.get(`/order`);
     setOrders(response.data);
   };
 
-  const getItems = async function () {
-    const response = await axios.get(`${url}/item`);
-    setItems(response.data);
+  const getProducts = async function () {
+    const response = await axios.get(`/item`);
+    setProducts(response.data);
   };
 
   const openModal = function ({
@@ -38,42 +74,60 @@ export const Orders = () => {
     eventDate,
     returnedAt,
     isCancelled,
-    orderItems
+    items
   }) {
-    setId(0);
-    setCustomerName('');
-    setAddress('');
-    setEventDate(0.0);
-    setReturnedAt(0.0);
-    setIsCancelled(false);
-    setOrderItems([]);
     setOperation(op);
     if (op === 1) {
       setTitle('Crear Orden');
+      setState((s) => ({ ...s, myOrder: _.cloneDeep(emptyOrder) }));
     } else if (op === 2) {
       setTitle('Editar Orden');
-      setId(id);
-      setCustomerName(customerName);
-      setAddress(address);
-      setEventDate(eventDate);
-      setReturnedAt(returnedAt);
-      setIsCancelled(isCancelled);
-      setOrderItems(orderItems);
+      setState((s) => ({
+        ...s,
+        myOrder: {
+          id,
+          customerName,
+          address,
+          eventDate,
+          returnedAt,
+          isCancelled,
+          items
+        }
+      }
+      ));
     };
   };
 
-  const makeRequest = async function ({ method, data, url }) {
+  const makeRequest = async function ({ method, data, url, closeModal = true }) {
     try {
-      const response = await axios({
-        method, url, data
+      const response = await axios.request({
+        method, data, url
       });
-      showAlert({ message: response.message, icon: 'success' });
-      document.getElementById('closeModalButton').click();
-      getOrders();
+
+      showAlert({ message: response.data.message, icon: 'success' });
+      if (closeModal) {
+        document.getElementById('closeModalButton').click();
+      }
+
+      return response.data;
     } catch (error) {
-      showAlert({ message: error.message, icon: 'error' })
+      const { message } = error.response.data;
+      showAlert({ message, icon: 'error' })
       console.log(error)
     }
+  };
+
+  const createOrderItem = async ({
+    method = 'post',
+    data,
+    url = '/order-item'
+  }) => {
+    return await makeRequest({
+      method,
+      data,
+      url,
+      closeModal: false
+    });
   };
 
   const sendOrder = async function () {
@@ -81,28 +135,28 @@ export const Orders = () => {
       case 1:
         await makeRequest({
           method: 'post',
-          url: `${url}/order`,
+          url: '/order',
           data: {
-            customerName,
-            address,
-            eventDate,
-            returnedAt,
-            isCancelled
+            customerName, address, eventDate, returnedAt, isCancelled, items
           }
         });
+
+        setState((s) => ({
+          ...s,
+          myOrder: _.cloneDeep(emptyOrder),
+          refresh: refresh + 1
+        }));
         break;
       case 2:
         await makeRequest({
           method: 'put',
-          url: `${url}/order/${id}`,
-          data: {
-            customerName,
-            address,
-            eventDate,
-            returnedAt,
-            isCancelled
-          }
+          url: `/order/${id}`,
+          data: { customerName, address, eventDate, returnedAt, isCancelled }
         });
+        setState((s) => ({
+          ...s, myOrder: _.cloneDeep(emptyOrder),
+          refresh: refresh + 1
+        }));
         break;
       default:
         break;
@@ -119,19 +173,51 @@ export const Orders = () => {
       cancelButtonText: 'Cancelar'
     }).then(async (result) => {
       if (result.isConfirmed) {
-        await axios.delete(`${url}/order/${id}`);
-        getOrders();
+        await axios.delete(`/order/${id}`);
+        setState((s) => ({ ...s, refresh: refresh + 1 }));
       } else {
         showAlert({ message: 'Orden no eliminada', icon: 'info' });
       }
     });
   };
 
+  const cancelOrder = function (id, name) {
+    showAlert({
+      message: `¿Seguro de cancelar la orden para ${name}?`,
+      icon: 'question',
+      text: 'Esta accion no se puede revertir',
+      showCancelButton: true,
+      confirmButtonText: 'Si, cancelar',
+      cancelButtonText: 'Salir'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await axios.request({
+          method: 'put',
+          data: {
+            isCancelled: true
+          },
+          url: `/order/${id}`
+        });
+        setState((s) => ({ ...s, refresh: refresh + 1 }));
+      } else {
+        showAlert({ message: 'Orden no cancelada', icon: 'info' });
+      }
+    });
+  };
+
+  const parseDate = function (date) {
+    if (date) {
+      const parsedDate = new Date(date);
+      return `${parsedDate.toLocaleDateString('es-MX')} ${parsedDate.toLocaleTimeString('es-MX')}`;
+    }
+    return '';
+  }
+
   useEffect(function () {
     getOrders();
-    getItems();
+    getProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refresh]);
 
   return (
     <div className='App'>
@@ -156,6 +242,7 @@ export const Orders = () => {
                     <th>Direccion del Evento</th>
                     <th>Fecha del Evento</th>
                     <th>Fecha Devolución</th>
+                    <th>Estatus de Orden</th>
                     <th />
                   </tr>
                 </thead>
@@ -166,9 +253,13 @@ export const Orders = () => {
                         <td>{(index + 1)}</td>
                         <td>{order.customerName}</td>
                         <td>{order.address}</td>
-                        <td>{order.eventDate}</td>
-                        <td>{order.returnedAt}</td>
-                        <td>
+                        <td className='text-center'>{parseDate(order.eventDate)}</td>
+                        <td className='text-center'>{parseDate(order.returnedAt)}</td>
+                        <td className='text-center'>{getOrderStatus({
+                          isCancelled: order.isCancelled,
+                          returnedAt: order.returnedAt
+                        })}</td>
+                        <td className='text-center'>
                           <button onClick={() => openModal({
                             op: 2,
                             id: order.id,
@@ -176,13 +267,18 @@ export const Orders = () => {
                             address: order.address,
                             eventDate: order.eventDate,
                             returnedAt: order.returnedAt,
-                            orderItems: order.items
+                            isCancelled: order.isCancelled,
+                            items: order.items
                           })}
                             className='btn btn-primary' data-bs-toggle='modal' data-bs-target='#modalOrder'>
                             <i className='fa-solid fa-edit'></i>
                           </button>
                           &nbsp;
-                          <button onClick={() => deleteOrder(order.id, order.customerName)} className='btn btn-danger'>
+                          <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => cancelOrder(order.id, order.customerName)} className='btn btn-warning'>
+                            <i className='fa-solid fa-ban'></i>
+                          </button>
+                          &nbsp;
+                          <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => deleteOrder(order.id, order.customerName)} className='btn btn-danger'>
                             <i className='fa-solid fa-trash'></i>
                           </button>
                         </td>
@@ -197,19 +293,14 @@ export const Orders = () => {
       </div>
       {
         <ModalOrder
-          customerName={customerName}
-          address={address}
-          eventDate={eventDate}
-          returnedAt={returnedAt}
-          orderItems={orderItems}
-          items={items}
+          myOrder={myOrder}
+          products={products}
           title={title}
-          setAddress={setAddress}
-          setCustomerName={setCustomerName}
-          setEventDate={setEventDate}
-          setReturnedAt={setReturnedAt}
           sendOrder={sendOrder}
-          setOrderItems={setOrderItems}
+          operation={operation}
+          createOrderItem={createOrderItem}
+          makeRequest={makeRequest}
+          setState={setState}
         />
       }
     </div>
