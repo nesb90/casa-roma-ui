@@ -1,36 +1,61 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 
-import { SERVER } from '../../config';
-
+import getAxios from '../../common/axios'
 import { showAlert, parseCurrency } from '../../common';
+import _ from 'lodash';
+
+const emptyItem = {
+  id: 0,
+  name: '',
+  description: '',
+  rentPrice: '',
+  itemPrice: '',
+}
 
 function Items() {
-  const url = `${SERVER.url}${SERVER.apiPath}`;
+  const axios = getAxios();
+
   const [items, setItems] = useState([]);
-  const [id, setId] = useState(0);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [rentPrice, setRentPrice] = useState(0.0);
-  const [itemPrice, setItemPrice] = useState(0.0);
+  const [state, setState] = useState({
+    myItem: _.cloneDeep(emptyItem),
+    refresh: 0
+  });
   const [operation, setOperation] = useState(1);
   const [title, setTitle] = useState('');
 
+  const {
+    myItem,
+    refresh
+  } = state
+
+  const {
+    id,
+    name,
+    description,
+    rentPrice,
+    itemPrice
+  } = myItem
+
   const getItems = async function () {
-    const response = await axios.get(`${url}/item`);
+    const response = await axios.get(`/item`);
     setItems(response.data);
   };
 
-  const makeRequest = async function ({ method, data, url }) {
+  const makeRequest = async function ({ method, data, url, closeModal = true }) {
     try {
-      const response = await axios({
-        method, url, data
+      const response = await axios.request({
+        method, data, url
       });
-      showAlert({ message: response.message, icon: 'success' });
-      document.getElementById('closeModalButton').click();
-      getItems();
+
+      showAlert({ message: response.data.message, icon: 'success' });
+      if (closeModal) {
+        document.getElementById('closeModalItem').click();
+      }
+
+      return response.data;
     } catch (error) {
-      showAlert({ message: error.message, icon: 'error' })
+      const { message } = error.response.data;
+      showAlert({ message, icon: 'error' })
       console.log(error)
     }
   };
@@ -40,7 +65,7 @@ function Items() {
       case 1:
         await makeRequest({
           method: 'post',
-          url: `${url}/item`,
+          url: `/item`,
           data: {
             name,
             description,
@@ -48,11 +73,17 @@ function Items() {
             itemPrice
           }
         });
+
+        setState((s) => ({
+          ...s,
+          myItem: _.cloneDeep(emptyItem),
+          refresh: refresh + 1
+        }));
         break;
       case 2:
         await makeRequest({
           method: 'put',
-          url: `${url}/item/${id}`,
+          url: `/item/${id}`,
           data: {
             name,
             description,
@@ -60,6 +91,12 @@ function Items() {
             itemPrice
           }
         });
+
+        setState((s) => ({
+          ...s,
+          myItem: _.cloneDeep(emptyItem),
+          refresh: refresh + 1
+        }));
         break;
       default:
         break;
@@ -75,8 +112,8 @@ function Items() {
       confirmButtonText: 'Si, eliminar',
       cancelButtonText: 'Cancelar'
     }).then(async (result) => {
-      if(result.isConfirmed) {
-        await axios.delete(`${url}/item/${id}`);
+      if (result.isConfirmed) {
+        await axios.delete(`/item/${id}`);
         getItems();
       } else {
         showAlert({ message: 'Producto no eliminado', icon: 'info' });
@@ -92,87 +129,111 @@ function Items() {
     rentPrice,
     itemPrice
   }) {
-    setId(0);
-    setName('');
-    setDescription('');
-    setRentPrice(0.0);
-    setItemPrice(0.0);
     setOperation(op);
     if (op === 1) {
       setTitle('Agregar Producto');
+      setState((s) => ({
+        myItem: _.cloneDeep(emptyItem)
+      }));
     } else if (op === 2) {
       setTitle('Editar Producto');
-      setId(id);
-      setName(name);
-      setDescription(description);
-      setRentPrice(rentPrice);
-      setItemPrice(itemPrice);
+      setState((s) => ({
+        myItem: {
+          id, name, description, rentPrice, itemPrice
+        }
+      }))
     }
+  };
+
+  const setName = (data) => {
+    myItem.name = data
+    setState((s) => ({
+      ...s, myItem
+    }));
+  };
+
+  const setDescription = (data) => {
+    myItem.description = data
+    setState((s) => ({
+      ...s, myItem
+    }));
+  };
+
+  const setRentPrice = (data) => {
+    myItem.rentPrice = data
+    setState((s) => ({
+      ...s, myItem
+    }));
+  };
+
+  const setItemPrice = (data) => {
+    myItem.itemPrice = data
+    setState((s) => ({
+      ...s, myItem
+    }));
   };
 
   useEffect(function () {
     getItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refresh]);
 
   return (
-    <div className='App'>
-      <div className='container-fluid'>
-        <div className='row mt-3'>
-          <div className='col-md-4 offset-md-4'>
-            <div className='d-grid mx-auto'>
-              <button className='btn btn-success' onClick={() => openModal({ op: 1 })} data-bs-toggle='modal' data-bs-target='#modalItem'>
-                <i className='fa-solid fa-circle-plus'></i> Añadir
-              </button>
-            </div>
+    <div className='container-fluid'>
+      <div className='row mt-3'>
+        <div className='col-md-4 offset-md-4'>
+          <div className='d-grid mx-auto'>
+            <button className='btn btn-success' onClick={() => openModal({ op: 1 })} data-bs-toggle='modal' data-bs-target='#modalItem'>
+              <i className='fa-solid fa-circle-plus'></i> Crear Producto
+            </button>
           </div>
         </div>
-        <div className='row mt-3'>
-          <div className='col-12 col-lg-8 offset-0 offset-lg-2'>
-            <div className='table-responsive'>
-              <table className='table table-bordered'>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Producto</th>
-                    <th>Descripcion</th>
-                    <th>Precio de Renta</th>
-                    <th>Precio de Compra</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody className='table-group-divider'>
-                  {
-                    items.map((item, index) => (
-                      <tr key={item.id}>
-                        <td>{(index + 1)}</td>
-                        <td>{item.name}</td>
-                        <td>{item.description}</td>
-                        <td>${parseCurrency(item.rentPrice)}</td>
-                        <td>${parseCurrency(item.itemPrice)}</td>
-                        <td>
-                          <button onClick={() => openModal({
-                            op: 2,
-                            id: item.id,
-                            name: item.name,
-                            description: item.description,
-                            rentPrice: item.rentPrice,
-                            itemPrice: item.itemPrice
-                          })}
-                            className='btn btn-primary' data-bs-toggle='modal' data-bs-target='#modalItem'>
-                            <i className='fa-solid fa-edit'></i>
-                          </button>
-                          &nbsp;
-                          <button onClick={() => deleteItem(item.id, item.name)} className='btn btn-danger'>
-                            <i className='fa-solid fa-trash'></i>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  }
-                </tbody>
-              </table>
-            </div>
+      </div>
+      <div className='row mt-3'>
+        <div className='col-12 col-lg-8 offset-0 offset-lg-2'>
+          <div className='table-responsive'>
+            <table className='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Producto</th>
+                  <th>Descripcion</th>
+                  <th>Precio de Renta</th>
+                  <th>Precio de Compra</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody className='table-group-divider'>
+                {
+                  items.map((item, index) => (
+                    <tr key={item.id}>
+                      <td>{(index + 1)}</td>
+                      <td>{item.name}</td>
+                      <td>{item.description}</td>
+                      <td>${parseCurrency(item.rentPrice)}</td>
+                      <td>${parseCurrency(item.itemPrice)}</td>
+                      <td>
+                        <button onClick={() => openModal({
+                          op: 2,
+                          id: item.id,
+                          name: item.name,
+                          description: item.description,
+                          rentPrice: item.rentPrice,
+                          itemPrice: item.itemPrice
+                        })}
+                          className='btn btn-primary' data-bs-toggle='modal' data-bs-target='#modalItem'>
+                          <i className='fa-solid fa-edit'></i>
+                        </button>
+                        &nbsp;
+                        <button onClick={() => deleteItem(item.id, item.name)} className='btn btn-danger'>
+                          <i className='fa-solid fa-trash'></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -185,36 +246,36 @@ function Items() {
             </div>
             <div className='modal-body'>
               <input type='hidden' id='id'></input>
+              <label>Nombre de Producto</label>
               <div className='input-group mb-3'>
                 <span className='input-group-text'><i className='fa-solid fa-bars'></i></span>
-                <input type='text' id='name' className='form-control' placeholder='Nombre' value={name} onChange={(e) => setName(e.target.value)}></input>
+                <input type='text' id='name' className='form-control' placeholder='Nombre de Producto' value={name} onChange={(e) => setName(e.target.value)}></input>
               </div>
+              <label>Descripcion</label>
               <div className='input-group mb-3'>
                 <span className='input-group-text'><i className='fa-solid fa-bars'></i></span>
                 <input type='text' id='description' className='form-control' placeholder='Descripcion' value={description} onChange={(e) => setDescription(e.target.value)}></input>
               </div>
+              <label>Precio de Renta</label>
               <div className='input-group mb-3'>
                 <span className='input-group-text'><i className='fa-solid fa-dollar-sign'></i></span>
                 <input type='number' id='rentPrice' className='form-control' placeholder='Precio De Renta' value={rentPrice} onChange={(e) => setRentPrice(e.target.value)}></input>
               </div>
+              <label>Precio de Compra</label>
               <div className='input-group mb-3'>
                 <span className='input-group-text'><i className='fa-solid fa-dollar-sign'></i></span>
                 <input type='number' id='itemPrice' className='form-control' placeholder='Precio de Compra' value={itemPrice} onChange={(e) => setItemPrice(e.target.value)}></input>
               </div>
-              <div className='d-grid col-6 mx-auto'>
-                <button onClick={() => sendItems()} className='btn btn-success'>
-                  <i className='fa-solid fa-floppy-disk'></i> Guardar
-                </button>
-              </div>
             </div>
             <div className='modal-footer'>
-              <button id='closeModalButton' type='button' className='btn btn-secondary' data-bs-dismiss='modal'>Cerrar</button>
+              <button onClick={() => sendItems()} className='btn btn-success'><i className='fa-solid fa-floppy-disk'></i> Guardar</button>
+              <button id='closeModalItem' type='button' className='btn btn-secondary' data-bs-dismiss='modal'>Cerrar</button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default Items

@@ -15,7 +15,7 @@ const emptyOrder = {
   items: []
 }
 
-export const Orders = () => {
+const Orders = () => {
   const axios = getAxios();
   const [orders, setOrders] = useState([]);
   const [operation, setOperation] = useState(1);
@@ -106,7 +106,7 @@ export const Orders = () => {
 
       showAlert({ message: response.data.message, icon: 'success' });
       if (closeModal) {
-        document.getElementById('closeModalButton').click();
+        document.getElementById('closeModalOrder').click();
       }
 
       return response.data;
@@ -220,7 +220,6 @@ export const Orders = () => {
   }, [refresh]);
 
   return (
-    <div className='App'>
       <div className='container-fluid'>
         <div className='row mt-3'>
           <div className='col-md-4 offset-md-4'>
@@ -290,7 +289,6 @@ export const Orders = () => {
             </div>
           </div>
         </div>
-      </div>
       {
         <ModalOrder
           myOrder={myOrder}
@@ -306,3 +304,5 @@ export const Orders = () => {
     </div>
   )
 };
+
+export default Orders

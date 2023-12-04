@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { parseCurrency } from '../../common';
 
-const ModalOrder = (props) => {
+function ModalOrder (props) {
   const [selectedItem, setSelectItem] = useState('');
   const [quantity, setQuantity] = useState('');
 
@@ -40,7 +40,7 @@ const ModalOrder = (props) => {
       };
     });
   } else {
-    mappedOrderItems = []
+    mappedOrderItems = [];
   }
 
   const getOrderTotal = () => {
@@ -239,7 +239,7 @@ const ModalOrder = (props) => {
             <button disabled={isCancelled} onClick={() => saveOrder()} className='btn btn-success'>
               <i className='fa-solid fa-floppy-disk'></i> Guardar
             </button>
-            <button id='closeModalButton' type='button' className='btn btn-secondary' data-bs-dismiss='modal'>Cerrar</button>
+            <button id='closeModalOrder' type='button' className='btn btn-secondary' data-bs-dismiss='modal'>Cerrar</button>
           </div>
         </div>
       </div>
