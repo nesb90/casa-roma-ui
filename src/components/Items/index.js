@@ -181,20 +181,25 @@ function Items() {
   return (
     <div className='container-fluid'>
       <div className='row mt-3'>
-        <div className='col-md-4 offset-md-4'>
-          <div className='d-grid mx-auto'>
+        <div className='col-12 col-lg-8 offset-0 offset-lg-2'>
+          <div className='row'>
+            <div className='col'>
+              <h3>Productos</h3>
+            </div>
+            <div className='col text-end'>
             <button className='btn btn-success' onClick={() => openModal({ op: 1 })} data-bs-toggle='modal' data-bs-target='#modalItem'>
               <i className='fa-solid fa-circle-plus'></i> Crear Producto
             </button>
+            </div>
           </div>
         </div>
       </div>
       <div className='row mt-3'>
         <div className='col-12 col-lg-8 offset-0 offset-lg-2'>
           <div className='table-responsive'>
-            <table className='table table-bordered'>
+            <table className='table table-bordered table-striped'>
               <thead>
-                <tr>
+                <tr className="text-center">
                   <th>#</th>
                   <th>Producto</th>
                   <th>Descripcion</th>
@@ -207,12 +212,12 @@ function Items() {
                 {
                   items.map((item, index) => (
                     <tr key={item.id}>
-                      <td>{(index + 1)}</td>
+                      <td className="text-center">{(index + 1)}</td>
                       <td>{item.name}</td>
                       <td>{item.description}</td>
-                      <td>${parseCurrency(item.rentPrice)}</td>
-                      <td>${parseCurrency(item.itemPrice)}</td>
-                      <td>
+                      <td className="text-end">${parseCurrency(item.rentPrice)}</td>
+                      <td className="text-end">${parseCurrency(item.itemPrice)}</td>
+                      <td className="text-center">
                         <button onClick={() => openModal({
                           op: 2,
                           id: item.id,

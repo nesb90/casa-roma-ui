@@ -4,16 +4,17 @@ import _ from 'lodash';
 
 import getAxios from "../../common/axios";
 import { showAlert } from '../../common';
+import ModalStock from "./modal-stock";
 
 const emptyItemStock = {
   id: 0,
-  itemName: '',
   itemId: 0,
+  productName: '',
   initialStock: 0,
   total: 0
 }
 
-function Stock () {
+function Stock() {
   const axios = getAxios();
   const [products, setProducts] = useState([])
   const [itemStocks, setItemStocks] = useState([]);
@@ -29,24 +30,19 @@ function Stock () {
     refresh
   } = state;
 
-  const {
-    id,
-    itemName,
-    itemId,
-    initialStock,
-    total
-  } = myItemStock;
-  let mappedItemStocks
-
+  let mappedItemStocks;
+  let productsInStock = [];
   if (Array.isArray(itemStocks) && itemStocks.length > 0) {
     mappedItemStocks = itemStocks.map((itemStock) => {
-      const itemData = products.find((item) => item.id == itemStock.itemId);
+      const productData = products.find((item) => item.id == itemStock.itemId);
+      productsInStock.push(productData.id);
       return {
         id: itemStock.id,
-        productName: itemData.name,
+        productName: productData.name,
+        productId: productData.id,
         initialStock: itemStock.initialStock,
         total: itemStock.total
-      }
+      };
     });
   } else {
     mappedItemStocks = [];
@@ -62,25 +58,65 @@ function Stock () {
     setItemStocks(response.data);
   };
 
+  const makeRequest = async function ({ method, data, url, closeModal = true }) {
+    try {
+      const response = await axios.request({
+        method, data, url
+      });
+
+      showAlert({ message: response.data.message, icon: 'success' });
+      if (closeModal) {
+        document.getElementById('closeModalStock').click();
+      }
+
+      return response.data;
+    } catch (error) {
+      const { message } = error.response.data;
+      showAlert({ message, icon: 'error' })
+      console.log(error)
+    }
+  };
+
   const openModal = function ({
     op,
     id,
     itemId,
+    productName,
     initialStock,
     total
   }) {
     setOperation(op);
-    if (operation === 1) {
+    if (op === 1) {
       setTitle('Crear Stock');
-      setState((s) => ({ ...s, myItemStock: _.cloneDeep(emptyItemStock)}));
-    } else if (operation === 2) {
+      setState((s) => ({ ...s, myItemStock: _.cloneDeep(emptyItemStock) }));
+    } else if (op === 2) {
       setTitle('Editar Stock');
       setState((s) => ({
         ...s, myItemStock: {
-          id, itemId, initialStock, total
+          id, itemId, productName, initialStock, total
         }
       }));
     };
+  };
+
+  const sendStock = async function ({
+    method,
+    data,
+    url,
+    closeModal
+  }) {
+    await makeRequest({
+      method,
+      data,
+      url,
+      closeModal
+    });
+
+    if (operation == 2) {
+      setState((s) => ({ ...s, refresh: refresh + 1 }));
+    } else {
+      setState((s) => ({ myItemStock: _.cloneDeep(emptyItemStock), refresh: refresh + 1 }));
+    }
   };
 
   const deleteItemStock = async function (id) {
@@ -90,26 +126,31 @@ function Stock () {
   useEffect(function () {
     getItems();
     getItemStocks();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
 
   return (
     <div className='container-fluid'>
       <div className='row mt-3'>
-        <div className='col-md-4 offset-md-4'>
-          <div className='d-grid mx-auto'>
-            <button className='btn btn-success' onClick={() => openModal({ op: 1 })} data-bs-toggle='modal' data-bs-target='#modalStock'>
-              <i className='fa-solid fa-circle-plus'></i> Crear Stock
-            </button>
+        <div className='col-12 col-lg-8 offset-0 offset-lg-2'>
+          <div className='row'>
+            <div className='col'>
+              <h3>Inventario</h3>
+            </div>
+            <div className='col text-end'>
+              <button className='btn btn-success' onClick={() => openModal({ op: 1 })} data-bs-toggle='modal' data-bs-target='#modalStock'>
+                <i className='fa-solid fa-circle-plus'></i> Crear Stock
+              </button>
+            </div>
           </div>
         </div>
       </div>
       <div className='row mt-3'>
         <div className='col-12 col-lg-8 offset-0 offset-lg-2'>
           <div className='table-responsive'>
-            <table className='table table-bordered'>
+            <table className='table table-bordered table-striped'>
               <thead>
-                <tr>
+                <tr className="text-center">
                   <th>#</th>
                   <th>Producto</th>
                   <th>Stock Inicial</th>
@@ -121,18 +162,17 @@ function Stock () {
                 {
                   mappedItemStocks.map((item, index) => (
                     <tr key={item.id}>
-                      <td>{(index + 1)}</td>
+                      <td className="text-center">{(index + 1)}</td>
                       <td>{item.productName}</td>
-                      <td>{item.initialStock}</td>
-                      <td>{item.total}</td>
-                      <td>
+                      <td className="text-center">{item.initialStock}</td>
+                      <td className="text-center">{item.total}</td>
+                      <td className="text-center">
                         <button onClick={() => openModal({
                           op: 2,
                           id: item.id,
-                          name: item.productName,
-                          description: item.description,
-                          rentPrice: item.rentPrice,
-                          itemPrice: item.itemPrice
+                          productName: item.productName,
+                          initialStock: item.initialStock,
+                          total: item.total
                         })}
                           className='btn btn-primary' data-bs-toggle='modal' data-bs-target='#modalStock'>
                           <i className='fa-solid fa-edit'></i>
@@ -150,43 +190,16 @@ function Stock () {
           </div>
         </div>
       </div>
-      {/* <div id='modalStock' className='modal fade' aria-hidden='true'>
-        <div className='modal-dialog'>
-          <div className='modal-content'>
-            <div className='modal-header'>
-              <label className='h5'>{title}</label>
-              <button type='button' className='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-            </div>
-            <div className='modal-body'>
-              <input type='hidden' id='id'></input>
-              <label>Nombre de Producto</label>
-              <div className='input-group mb-3'>
-                <span className='input-group-text'><i className='fa-solid fa-bars'></i></span>
-                <input type='text' id='name' className='form-control' placeholder='Nombre de Producto' value={name} onChange={(e) => setName(e.target.value)}></input>
-              </div>
-              <label>Descripcion</label>
-              <div className='input-group mb-3'>
-                <span className='input-group-text'><i className='fa-solid fa-bars'></i></span>
-                <input type='text' id='description' className='form-control' placeholder='Descripcion' value={description} onChange={(e) => setDescription(e.target.value)}></input>
-              </div>
-              <label>Precio de Renta</label>
-              <div className='input-group mb-3'>
-                <span className='input-group-text'><i className='fa-solid fa-dollar-sign'></i></span>
-                <input type='number' id='rentPrice' className='form-control' placeholder='Precio De Renta' value={rentPrice} onChange={(e) => setRentPrice(e.target.value)}></input>
-              </div>
-              <label>Precio de Compra</label>
-              <div className='input-group mb-3'>
-                <span className='input-group-text'><i className='fa-solid fa-dollar-sign'></i></span>
-                <input type='number' id='itemPrice' className='form-control' placeholder='Precio de Compra' value={itemPrice} onChange={(e) => setItemPrice(e.target.value)}></input>
-              </div>
-            </div>
-            <div className='modal-footer'>
-              <button onClick={() => sendItems()} className='btn btn-success'><i className='fa-solid fa-floppy-disk'></i> Guardar</button>
-              <button id='closeModalStock' type='button' className='btn btn-secondary' data-bs-dismiss='modal'>Cerrar</button>
-            </div>
-          </div>
-        </div>
-      </div> */}
+      <ModalStock
+        title={title}
+        myItemStock={myItemStock}
+        products={products}
+        setState={setState}
+        operation={operation}
+        refresh={refresh}
+        sendStock={sendStock}
+        productsInStock={productsInStock}
+      />
     </div>
   )
 

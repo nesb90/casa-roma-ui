@@ -220,75 +220,80 @@ const Orders = () => {
   }, [refresh]);
 
   return (
-      <div className='container-fluid'>
-        <div className='row mt-3'>
-          <div className='col-md-4 offset-md-4'>
-            <div className='d-grid mx-auto'>
+    <div className='container-fluid'>
+      <div className='row mt-3'>
+        <div className='col-12 col-lg-8 offset-0 offset-lg-2'>
+          <div className='row'>
+            <div className='col'>
+              <h3>Ordenes</h3>
+            </div>
+            <div className='col text-end'>
               <button className='btn btn-success' onClick={() => openModal({ op: 1 })} data-bs-toggle='modal' data-bs-target='#modalOrder'>
                 <i className='fa-solid fa-circle-plus'></i> Crear Orden
               </button>
             </div>
           </div>
         </div>
-        <div className='row mt-3'>
-          <div className='col-12 col-lg-8 offset-0 offset-lg-2'>
-            <div className='table-responsive'>
-              <table className='table table-bordered'>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Nombre del Cliente</th>
-                    <th>Direccion del Evento</th>
-                    <th>Fecha del Evento</th>
-                    <th>Fecha Devolución</th>
-                    <th>Estatus de Orden</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody className='table-group-divider'>
-                  {
-                    orders.map((order, index) => (
-                      <tr key={order.id}>
-                        <td>{(index + 1)}</td>
-                        <td>{order.customerName}</td>
-                        <td>{order.address}</td>
-                        <td className='text-center'>{parseDate(order.eventDate)}</td>
-                        <td className='text-center'>{parseDate(order.returnedAt)}</td>
-                        <td className='text-center'>{getOrderStatus({
+      </div>
+      <div className='row mt-3'>
+        <div className='col-12 col-lg-8 offset-0 offset-lg-2'>
+          <div className='table-responsive'>
+            <table className='table table-bordered table-striped'>
+              <thead>
+                <tr className="text-center">
+                  <th>#</th>
+                  <th>Nombre del Cliente</th>
+                  <th>Direccion del Evento</th>
+                  <th>Fecha del Evento</th>
+                  <th>Fecha Devolución</th>
+                  <th>Estatus de Orden</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody className='table-group-divider'>
+                {
+                  orders.map((order, index) => (
+                    <tr key={order.id}>
+                      <td className="text-center">{(index + 1)}</td>
+                      <td>{order.customerName}</td>
+                      <td>{order.address}</td>
+                      <td className='text-center'>{parseDate(order.eventDate)}</td>
+                      <td className='text-center'>{parseDate(order.returnedAt)}</td>
+                      <td className='text-center'>{getOrderStatus({
+                        isCancelled: order.isCancelled,
+                        returnedAt: order.returnedAt
+                      })}</td>
+                      <td className='text-center'>
+                        <button onClick={() => openModal({
+                          op: 2,
+                          id: order.id,
+                          customerName: order.customerName,
+                          address: order.address,
+                          eventDate: order.eventDate,
+                          returnedAt: order.returnedAt,
                           isCancelled: order.isCancelled,
-                          returnedAt: order.returnedAt
-                        })}</td>
-                        <td className='text-center'>
-                          <button onClick={() => openModal({
-                            op: 2,
-                            id: order.id,
-                            customerName: order.customerName,
-                            address: order.address,
-                            eventDate: order.eventDate,
-                            returnedAt: order.returnedAt,
-                            isCancelled: order.isCancelled,
-                            items: order.items
-                          })}
-                            className='btn btn-primary' data-bs-toggle='modal' data-bs-target='#modalOrder'>
-                            <i className='fa-solid fa-edit'></i>
-                          </button>
-                          &nbsp;
-                          <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => cancelOrder(order.id, order.customerName)} className='btn btn-warning'>
-                            <i className='fa-solid fa-ban'></i>
-                          </button>
-                          &nbsp;
-                          <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => deleteOrder(order.id, order.customerName)} className='btn btn-danger'>
-                            <i className='fa-solid fa-trash'></i>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  }
-                </tbody>
-              </table>
-            </div>
+                          items: order.items
+                        })}
+                          className='btn btn-primary' data-bs-toggle='modal' data-bs-target='#modalOrder'>
+                          <i className='fa-solid fa-edit'></i>
+                        </button>
+                        &nbsp;
+                        <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => cancelOrder(order.id, order.customerName)} className='btn btn-warning'>
+                          <i className='fa-solid fa-ban'></i>
+                        </button>
+                        &nbsp;
+                        <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => deleteOrder(order.id, order.customerName)} className='btn btn-danger'>
+                          <i className='fa-solid fa-trash'></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
           </div>
         </div>
+      </div>
       {
         <ModalOrder
           myOrder={myOrder}
