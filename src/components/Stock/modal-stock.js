@@ -26,6 +26,7 @@ function ModalStock(props) {
 
   const setInitialStock = function (data) {
     myItemStock.initialStock = data;
+    myItemStock.total = data;
     setState((s) => ({ ...s, myItemStock }));
   };
 
@@ -115,18 +116,14 @@ function ModalStock(props) {
             <label>Stock Actual</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-hashtag'></i></span>
-              <input type='number' id='rentPrice' className='form-control' placeholder='Stock Actual' value={total} disabled={operation == 2} onChange={(e) => setTotal(e.target.value)}></input>
+              <input type='number' id='rentPrice' className='form-control' placeholder='Stock Actual' value={total} disabled={true} onChange={(e) => setTotal(e.target.value)}></input>
             </div>
             <div hidden={operation == 1}>
               <label>Agregar o Quitar</label>
               <div className='input-group mb-3'>
-              <div className="input-group-prepend">
-                  <button className="btn btn-outline-danger" type='button' onClick={() => subtractToTotal()}>Quitar</button>
-                </div>
+                <button className="btn btn-outline-danger" type='button' onClick={() => subtractToTotal()}>Quitar</button>
                 <input type='number' className='form-control' placeholder='Cantidad' value={updateQuantity} onChange={(e) => setUpdateQuantity(e.target.value)}></input>
-                <div className="input-group-append">
-                  <button className="btn btn-outline-primary" type='button' onClick={() => addToTotal()}>Agregar</button>
-                </div>
+                <button className="btn btn-outline-primary" type='button' onClick={() => addToTotal()}>Agregar</button>
               </div>
             </div>
           </div>

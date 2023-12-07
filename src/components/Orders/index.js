@@ -281,9 +281,12 @@ const Orders = () => {
               </thead>
               <tbody className='table-group-divider'>
                 {
-                  orders.map((order, index) => (
+                  orders.map((order) => (
                     <tr key={order.id}>
-                      <td className="text-center">{(index + 1)}</td>
+                      <td className="text-center">CR-{order.id.toLocaleString('es-MX', {
+                        minimumIntegerDigits: 2,
+                        useGrouping: false
+                      })}</td>
                       <td>{order.customerName}</td>
                       <td>{order.address}</td>
                       <td className='text-center'>{parseDate(order.eventDate)}</td>
