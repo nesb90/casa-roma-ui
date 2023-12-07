@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import _ from 'lodash';
 
 import { showAlert } from '../../common';
 import getAxios from '../../common/axios';
+
 import ModalOrder from './modal-order';
-import _ from 'lodash';
+import ModalPayment from '../Payments/modal-payment';
 
 const emptyOrder = {
   id: 0,
@@ -14,6 +16,19 @@ const emptyOrder = {
   isCancelled: false,
   items: []
 }
+const emptyPayment = {
+  orderId: 0,
+  amount: '',
+  payConcept: '',
+  payments: []
+};
+const modalId = 'closeModalOrder';
+const orderStatuses = {
+  orderReceived: 'ORDEN_RECIBIDA',
+  processingOrder: 'PROCESANDO_ORDEN',
+  cancelled: 'ORDEN_CANCELADA',
+  completed: 'ORDEN_COMPLETADA'
+};
 
 const Orders = () => {
   const axios = getAxios();
@@ -22,15 +37,10 @@ const Orders = () => {
   const [title, setTitle] = useState('');
   const [products, setProducts] = useState([]); // products = db items
   const [state, setState] = useState({
+    myPayment: _.cloneDeep(emptyPayment),
     myOrder: _.cloneDeep(emptyOrder),
     refresh: 0
   });
-  const orderStatuses = {
-    orderReceived: 'ORDEN_RECIBIDA',
-    processingOrder: 'PROCESANDO_ORDEN',
-    cancelled: 'ORDEN_CANCELADA',
-    completed: 'ORDEN_COMPLETADA'
-  };
 
   const getOrderStatus = function ({
     isCancelled,
@@ -45,7 +55,7 @@ const Orders = () => {
     };
   };
 
-  const { myOrder, refresh } = state
+  const { myOrder, refresh, myPayment } = state
   let {
     id,
     customerName,
@@ -64,6 +74,14 @@ const Orders = () => {
   const getProducts = async function () {
     const response = await axios.get(`/item`);
     setProducts(response.data);
+  };
+
+  const getPayments = async function (orderId) {
+    const response = await axios.get(`/order-payment/${orderId}`);
+    myPayment.payments = _.get(response, 'data', []);
+    setState((s) => ({
+      ...s, myPayment
+    }));
   };
 
   const openModal = function ({
@@ -98,15 +116,15 @@ const Orders = () => {
     };
   };
 
-  const makeRequest = async function ({ method, data, url, closeModal = true }) {
+  const makeRequest = async function ({ method, data, url, closeModal = true, modalId = '' }) {
     try {
       const response = await axios.request({
         method, data, url
       });
 
       showAlert({ message: response.data.message, icon: 'success' });
-      if (closeModal) {
-        document.getElementById('closeModalOrder').click();
+      if (closeModal && !!modalId) {
+        document.getElementById(modalId).click();
       }
 
       return response.data;
@@ -138,7 +156,8 @@ const Orders = () => {
           url: '/order',
           data: {
             customerName, address, eventDate, returnedAt, isCancelled, items
-          }
+          },
+          modalId
         });
 
         setState((s) => ({
@@ -151,7 +170,8 @@ const Orders = () => {
         await makeRequest({
           method: 'put',
           url: `/order/${id}`,
-          data: { customerName, address, eventDate, returnedAt, isCancelled }
+          data: { customerName, address, eventDate, returnedAt, isCancelled },
+          modalId
         });
         setState((s) => ({
           ...s, myOrder: _.cloneDeep(emptyOrder),
@@ -211,6 +231,15 @@ const Orders = () => {
       return `${parsedDate.toLocaleDateString('es-MX')} ${parsedDate.toLocaleTimeString('es-MX')}`;
     }
     return '';
+  }
+
+  const openPaymentModal = async function (orderId) {
+    setTitle('Pagos');
+    await getPayments(orderId);
+    myPayment.orderId = orderId;
+    setState((s) => ({
+      ...s, myPayment
+    }))
   }
 
   useEffect(function () {
@@ -278,11 +307,20 @@ const Orders = () => {
                           <i className='fa-solid fa-edit'></i>
                         </button>
                         &nbsp;
-                        <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => cancelOrder(order.id, order.customerName)} className='btn btn-warning'>
+                        <button
+                          disabled={order.isCancelled || !!order.returnedAt}
+                          onClick={() => openPaymentModal(order.id)}
+                          className='btn btn-secondary'
+                          data-bs-toggle='modal' data-bs-target='#modalPayment'
+                        >
+                          <i className='fa-solid fa-money-bill'></i>
+                        </button>
+                        &nbsp;
+                        <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => cancelOrder(order.id, order.customerName)} className='btn btn-danger'>
                           <i className='fa-solid fa-ban'></i>
                         </button>
                         &nbsp;
-                        <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => deleteOrder(order.id, order.customerName)} className='btn btn-danger'>
+                        <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => deleteOrder(order.id, order.customerName)} className='btn btn-dark'>
                           <i className='fa-solid fa-trash'></i>
                         </button>
                       </td>
@@ -294,7 +332,7 @@ const Orders = () => {
           </div>
         </div>
       </div>
-      {
+      <div>
         <ModalOrder
           myOrder={myOrder}
           products={products}
@@ -303,9 +341,14 @@ const Orders = () => {
           operation={operation}
           createOrderItem={createOrderItem}
           makeRequest={makeRequest}
+          setState={setState} />
+        <ModalPayment
+          title={title}
+          myPayment={myPayment}
+          makeRequest={makeRequest}
           setState={setState}
-        />
-      }
+          refresh={refresh} />
+      </div>
     </div>
   )
 };

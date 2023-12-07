@@ -187,9 +187,7 @@ function ModalOrder (props) {
                 }
               </select>
               <input disabled={isCancelled || !!returnedAt} type='number' className='form-control' placeholder='Cantidad' value={quantity} onChange={(e) => setQuantity(e.target.value)}></input>
-              <div className="input-group-append">
-                <button disabled={isCancelled || !!returnedAt} className="btn btn-outline-primary" type='button' onClick={() => addItem()}>Agregar</button>
-              </div>
+              <button disabled={isCancelled || !!returnedAt} className="btn btn-outline-primary" type='button' onClick={() => addItem()}>Agregar</button>
             </div>
             <div className='input-group mb-3'>
               <table className='table table-striped table-bordered'>
