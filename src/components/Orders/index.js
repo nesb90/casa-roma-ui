@@ -22,6 +22,12 @@ const emptyPayment = {
   payConcept: '',
   payments: []
 };
+// const defaultFilters = {
+//   startDate: '',
+//   endDate: '',
+//   cancelled: false,
+//   completed: false
+// };
 const modalId = 'closeModalOrder';
 const orderStatuses = {
   orderReceived: 'ORDEN_RECIBIDA',
@@ -36,6 +42,7 @@ const Orders = () => {
   const [operation, setOperation] = useState(1);
   const [title, setTitle] = useState('');
   const [products, setProducts] = useState([]); // products = db items
+  // const [filters, setFilters] = useState(_.cloneDeep(defaultFilters));
   const [state, setState] = useState({
     myPayment: _.cloneDeep(emptyPayment),
     myOrder: _.cloneDeep(emptyOrder),
@@ -55,7 +62,13 @@ const Orders = () => {
     };
   };
 
-  const { myOrder, refresh, myPayment } = state
+  const { myOrder, refresh, myPayment } = state;
+  // const {
+  //   startDate,
+  //   endDate,
+  //   cancelled,
+  //   completed
+  // } = filters;
   let {
     id,
     customerName,
@@ -64,7 +77,7 @@ const Orders = () => {
     returnedAt,
     isCancelled,
     items
-  } = myOrder
+  } = myOrder;
 
   const getOrders = async function () {
     const response = await axios.get(`/order`);
@@ -231,7 +244,7 @@ const Orders = () => {
       return `${parsedDate.toLocaleDateString('es-MX')} ${parsedDate.toLocaleTimeString('es-MX')}`;
     }
     return '';
-  }
+  };
 
   const openPaymentModal = async function (orderId) {
     setTitle('Pagos');
@@ -240,7 +253,17 @@ const Orders = () => {
     setState((s) => ({
       ...s, myPayment
     }))
-  }
+  };
+
+  // const setCancelledFilter = function (value) {
+  //   filters.cancelled = value;
+  //   setFilters(filters);
+  // };
+
+  // const setCompletedFilter = function (value) {
+  //   filters.completed = value;
+  //   setFilters(filters);
+  // };
 
   useEffect(function () {
     getOrders();
@@ -251,7 +274,7 @@ const Orders = () => {
   return (
     <div className='container-fluid'>
       <div className='row mt-3'>
-        <div className='col-12 col-lg-8 offset-0 offset-lg-2'>
+        <div className='col'>
           <div className='row'>
             <div className='col'>
               <h3>Ordenes</h3>
@@ -265,7 +288,7 @@ const Orders = () => {
         </div>
       </div>
       <div className='row mt-3'>
-        <div className='col-12 col-lg-8 offset-0 offset-lg-2'>
+        <div className='col'>
           <div className='table-responsive'>
             <table className='table table-bordered table-striped'>
               <thead>
@@ -276,6 +299,7 @@ const Orders = () => {
                   <th>Fecha del Evento</th>
                   <th>Fecha Devolución</th>
                   <th>Estatus de Orden</th>
+                  <th>Fecha de Creación</th>
                   <th />
                 </tr>
               </thead>
@@ -283,7 +307,7 @@ const Orders = () => {
                 {
                   orders.map((order) => (
                     <tr key={order.id}>
-                      <td className="text-center">CR-{order.id.toLocaleString('es-MX', {
+                      <td className="text-center">CRE-{order.id.toLocaleString('es-MX', {
                         minimumIntegerDigits: 2,
                         useGrouping: false
                       })}</td>
@@ -295,6 +319,7 @@ const Orders = () => {
                         isCancelled: order.isCancelled,
                         returnedAt: order.returnedAt
                       })}</td>
+                      <td className='text-center'>{parseDate(order.createdAt)}</td>
                       <td className='text-center'>
                         <button onClick={() => openModal({
                           op: 2,

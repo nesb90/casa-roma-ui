@@ -95,7 +95,7 @@ function ModalOrder (props) {
     sendOrder();
     document.getElementById('item-list').selectedIndex = 0;
     setSelectItem('');
-    setQuantity(0);
+    setQuantity('');
   }
 
   const deleteOrderItem = async ({ itemId, itemIndex }) => {
@@ -207,7 +207,7 @@ function ModalOrder (props) {
                         <td>
                           {item.name}
                         </td>
-                        <td className="text-end">
+                        <td className="text-center">
                           {item.quantity}
                         </td>
                         <td className="text-end">

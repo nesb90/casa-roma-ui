@@ -10,7 +10,7 @@ const emptyItemStock = {
   id: 0,
   itemId: 0,
   productName: '',
-  initialStock: 0,
+  initialStock: '',
   total: 0
 }
 

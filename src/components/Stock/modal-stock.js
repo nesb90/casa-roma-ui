@@ -81,6 +81,8 @@ function ModalStock(props) {
         url: '/stock'
       });
     };
+
+    document.getElementById('item-list').selectedIndex = 0;
   };
 
   return (
@@ -111,7 +113,7 @@ function ModalStock(props) {
             <label>Stock Inicial</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-hashtag'></i></span>
-              <input type='text' id='description' className='form-control' placeholder='Stock Inicial' value={initialStock} disabled={operation == 2} onChange={(e) => setInitialStock(e.target.value)}></input>
+              <input type='number' id='description' className='form-control' placeholder='Stock Inicial' value={initialStock} disabled={operation == 2} onChange={(e) => setInitialStock(e.target.value)}></input>
             </div>
             <label>Stock Actual</label>
             <div className='input-group mb-3'>
@@ -121,14 +123,14 @@ function ModalStock(props) {
             <div hidden={operation == 1}>
               <label>Agregar o Quitar</label>
               <div className='input-group mb-3'>
-                <button className="btn btn-outline-danger" type='button' onClick={() => subtractToTotal()}>Quitar</button>
                 <input type='number' className='form-control' placeholder='Cantidad' value={updateQuantity} onChange={(e) => setUpdateQuantity(e.target.value)}></input>
-                <button className="btn btn-outline-primary" type='button' onClick={() => addToTotal()}>Agregar</button>
+                <button className="btn btn-outline-primary" type='button' disabled={!updateQuantity} onClick={() => addToTotal()}>Agregar</button>
+                <button className="btn btn-outline-danger" type='button' disabled={!updateQuantity} onClick={() => subtractToTotal()}>Quitar</button>
               </div>
             </div>
           </div>
           <div className='modal-footer'>
-            <button onClick={() => save()} className='btn btn-success'><i className='fa-solid fa-floppy-disk'></i> Guardar</button>
+            <button onClick={() => save()} className='btn btn-success' hidden={operation != 1}><i className='fa-solid fa-floppy-disk'></i> Guardar</button>
             <button id='closeModalStock' type='button' className='btn btn-secondary' data-bs-dismiss='modal'>Cerrar</button>
           </div>
         </div>
