@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from "react";
 import _ from 'lodash';
 
-import getAxios from "../../common/axios";
-import { showAlert } from '../../common';
+import { makeRequest } from "../../common/axios";
+import { showAlert } from "../../common";
 import ModalStock from "./modal-stock";
 
 const emptyItemStock = {
@@ -15,7 +15,6 @@ const emptyItemStock = {
 }
 
 function Stock() {
-  const axios = getAxios();
   const [products, setProducts] = useState([])
   const [itemStocks, setItemStocks] = useState([]);
   const [state, setState] = useState({
@@ -49,32 +48,19 @@ function Stock() {
   }
 
   const getItems = async function () {
-    const response = await axios.get(`/item`);
-    setProducts(response.data);
+    const response = await makeRequest({
+      method: 'get',
+      url: `/item`
+    });
+    setProducts(response);
   };
 
   const getItemStocks = async function () {
-    const response = await axios.get(`/stock`);
-    setItemStocks(response.data);
-  };
-
-  const makeRequest = async function ({ method, data, url, closeModal = true }) {
-    try {
-      const response = await axios.request({
-        method, data, url
-      });
-
-      showAlert({ message: response.data.message, icon: 'success' });
-      if (closeModal) {
-        document.getElementById('closeModalStock').click();
-      }
-
-      return response.data;
-    } catch (error) {
-      const { message } = error.response.data;
-      showAlert({ message, icon: 'error' })
-      console.log(error)
-    }
+    const response = await makeRequest({
+      method: 'get',
+      url: `/stock`
+    });
+    setItemStocks(response);
   };
 
   const openModal = function ({
@@ -99,28 +85,22 @@ function Stock() {
     };
   };
 
-  const sendStock = async function ({
-    method,
-    data,
-    url,
-    closeModal
-  }) {
-    await makeRequest({
-      method,
-      data,
-      url,
-      closeModal
+  const deleteItemStock = async function (id, item) {
+    showAlert({
+      message: `¿Seguro de Stock para el producto: ${item}?`,
+      icon: 'question',
+      text: 'Esta accion no se puede revertir',
+      showCancelButton: true,
+      confirmButtonText: 'Si, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await makeRequest({ url: `/stock/${id}`, method: 'delete' });
+        setState((s) => ({ ...s, refresh: refresh + 1 }));
+      } else {
+        showAlert({ message: 'Orden no eliminada', icon: 'info' });
+      }
     });
-
-    if (operation == 2) {
-      setState((s) => ({ ...s, refresh: refresh + 1 }));
-    } else {
-      setState((s) => ({ myItemStock: _.cloneDeep(emptyItemStock), refresh: refresh + 1 }));
-    }
-  };
-
-  const deleteItemStock = async function (id) {
-    return;
   };
 
   useEffect(function () {
@@ -178,7 +158,7 @@ function Stock() {
                           <i className='fa-solid fa-edit'></i>
                         </button>
                         &nbsp;
-                        <button onClick={() => deleteItemStock(item.id, item.name)} className='btn btn-danger'>
+                        <button onClick={() => deleteItemStock(item.id, item.productName)} className='btn btn-danger'>
                           <i className='fa-solid fa-trash'></i>
                         </button>
                       </td>
@@ -197,8 +177,9 @@ function Stock() {
         setState={setState}
         operation={operation}
         refresh={refresh}
-        sendStock={sendStock}
+        makeRequest={makeRequest}
         productsInStock={productsInStock}
+        emptyItemStock={emptyItemStock}
       />
     </div>
   )

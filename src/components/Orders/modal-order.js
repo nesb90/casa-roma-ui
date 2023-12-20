@@ -179,10 +179,10 @@ function ModalOrder (props) {
             <label>Productos</label>
             <div className='input-group mb-3'>
               <select disabled={isCancelled || !!returnedAt} id='item-list' className='form-control' onChange={(e) => setSelectItem(e.target.value)}>
-                <option selected>Seleccionar producto</option>
+                <option>Seleccionar producto</option>
                 {
                   products.map((i) => (
-                    <option value={i.id}>{i.name}</option>
+                    <option key={i.name} value={i.id}>{i.name}</option>
                   ))
                 }
               </select>
