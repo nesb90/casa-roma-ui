@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import _ from 'lodash';
 
 import { showAlert } from '../../common';
-import getAxios from '../../common/axios';
+import { makeRequest } from '../../common/axios';
 
 import ModalOrder from './modal-order';
 import ModalPayment from '../Payments/modal-payment';
@@ -37,7 +37,6 @@ const orderStatuses = {
 };
 
 const Orders = () => {
-  const axios = getAxios();
   const [orders, setOrders] = useState([]);
   const [operation, setOperation] = useState(1);
   const [title, setTitle] = useState('');
@@ -62,6 +61,13 @@ const Orders = () => {
     };
   };
 
+  const getOrderId = function (databaseId) {
+    return `CRE-${databaseId.toLocaleString('es-MX', {
+      minimumIntegerDigits: 2,
+      useGrouping: false
+    })}`;
+  };
+
   const { myOrder, refresh, myPayment } = state;
   // const {
   //   startDate,
@@ -80,18 +86,18 @@ const Orders = () => {
   } = myOrder;
 
   const getOrders = async function () {
-    const response = await axios.get(`/order`);
-    setOrders(response.data);
+    const response = await makeRequest({ url: `/order`, method: 'get' });
+    setOrders(response);
   };
 
   const getProducts = async function () {
-    const response = await axios.get(`/item`);
-    setProducts(response.data);
+    const response = await makeRequest({ url: `/item`, method: 'get' });
+    setProducts(response);
   };
 
   const getPayments = async function (orderId) {
-    const response = await axios.get(`/order-payment/${orderId}`);
-    myPayment.payments = _.get(response, 'data', []);
+    const response = await makeRequest({ url: `/order-payment/${orderId}`, method: 'get' });
+    myPayment.payments = response || [];
     setState((s) => ({
       ...s, myPayment
     }));
@@ -129,25 +135,6 @@ const Orders = () => {
     };
   };
 
-  const makeRequest = async function ({ method, data, url, closeModal = true, modalId = '' }) {
-    try {
-      const response = await axios.request({
-        method, data, url
-      });
-
-      showAlert({ message: response.data.message, icon: 'success' });
-      if (closeModal && !!modalId) {
-        document.getElementById(modalId).click();
-      }
-
-      return response.data;
-    } catch (error) {
-      const { message } = error.response.data;
-      showAlert({ message, icon: 'error' })
-      console.log(error)
-    }
-  };
-
   const createOrderItem = async ({
     method = 'post',
     data,
@@ -157,48 +144,48 @@ const Orders = () => {
       method,
       data,
       url,
-      closeModal: false
+      alertResult: true
     });
   };
 
   const sendOrder = async function () {
-    switch (operation) {
-      case 1:
-        await makeRequest({
-          method: 'post',
-          url: '/order',
-          data: {
-            customerName, address, eventDate, returnedAt, isCancelled, items
-          },
-          modalId
-        });
+    if (operation === 1) {
+      await makeRequest({
+        method: 'post',
+        url: '/order',
+        data: {
+          customerName, address, eventDate, returnedAt, isCancelled, items
+        },
+        alertResult: true,
+        closeModal: true,
+        modalId
+      });
 
-        setState((s) => ({
-          ...s,
-          myOrder: _.cloneDeep(emptyOrder),
-          refresh: refresh + 1
-        }));
-        break;
-      case 2:
-        await makeRequest({
-          method: 'put',
-          url: `/order/${id}`,
-          data: { customerName, address, eventDate, returnedAt, isCancelled },
-          modalId
-        });
-        setState((s) => ({
-          ...s, myOrder: _.cloneDeep(emptyOrder),
-          refresh: refresh + 1
-        }));
-        break;
-      default:
-        break;
-    }
+      setState((s) => ({
+        ...s,
+        myOrder: _.cloneDeep(emptyOrder),
+        refresh: refresh + 1
+      }));
+    } else if (operation === 2) {
+      await makeRequest({
+        method: 'put',
+        url: `/order/${id}`,
+        data: { customerName, address, eventDate, returnedAt, isCancelled },
+        alertResult: true,
+        closeModal: true,
+        modalId
+      });
+
+      setState((s) => ({
+        ...s, myOrder: _.cloneDeep(emptyOrder),
+        refresh: refresh + 1
+      }));
+    };
   };
 
-  const deleteOrder = function (id, name) {
+  const deleteOrder = function (id) {
     showAlert({
-      message: `¿Seguro de eliminar la orden para ${name}?`,
+      message: `¿Seguro de eliminar la orden ${getOrderId(id)}?`,
       icon: 'question',
       text: 'Esta accion no se puede revertir',
       showCancelButton: true,
@@ -206,7 +193,7 @@ const Orders = () => {
       cancelButtonText: 'Cancelar'
     }).then(async (result) => {
       if (result.isConfirmed) {
-        await axios.delete(`/order/${id}`);
+        await makeRequest({ url: `/order/${id}`, method: 'delete' });
         setState((s) => ({ ...s, refresh: refresh + 1 }));
       } else {
         showAlert({ message: 'Orden no eliminada', icon: 'info' });
@@ -214,9 +201,9 @@ const Orders = () => {
     });
   };
 
-  const cancelOrder = function (id, name) {
+  const cancelOrder = function (id) {
     showAlert({
-      message: `¿Seguro de cancelar la orden para ${name}?`,
+      message: `¿Seguro de cancelar la orden ${getOrderId(id)}?`,
       icon: 'question',
       text: 'Esta accion no se puede revertir',
       showCancelButton: true,
@@ -224,7 +211,7 @@ const Orders = () => {
       cancelButtonText: 'Salir'
     }).then(async (result) => {
       if (result.isConfirmed) {
-        await axios.request({
+        await makeRequest({
           method: 'put',
           data: {
             isCancelled: true
@@ -307,10 +294,7 @@ const Orders = () => {
                 {
                   orders.map((order) => (
                     <tr key={order.id}>
-                      <td className="text-center">CRE-{order.id.toLocaleString('es-MX', {
-                        minimumIntegerDigits: 2,
-                        useGrouping: false
-                      })}</td>
+                      <td className="text-center">{getOrderId(order.id)}</td>
                       <td>{order.customerName}</td>
                       <td>{order.address}</td>
                       <td className='text-center'>{parseDate(order.eventDate)}</td>
@@ -348,7 +332,7 @@ const Orders = () => {
                           <i className='fa-solid fa-ban'></i>
                         </button>
                         &nbsp;
-                        <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => deleteOrder(order.id, order.customerName)} className='btn btn-dark'>
+                        <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => deleteOrder(order.id)} className='btn btn-dark'>
                           <i className='fa-solid fa-trash'></i>
                         </button>
                       </td>

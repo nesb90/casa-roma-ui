@@ -1,5 +1,8 @@
 /* eslint-disable eqeqeq */
 import React, { useState } from "react";
+import _ from "lodash";
+
+const modalId = 'closeModalStock'
 
 function ModalStock(props) {
   const {
@@ -8,8 +11,10 @@ function ModalStock(props) {
     operation,
     products,
     setState,
-    sendStock,
-    productsInStock
+    makeRequest,
+    productsInStock,
+    emptyItemStock,
+    refresh
   } = props
 
   const {
@@ -35,27 +40,45 @@ function ModalStock(props) {
     setState((s) => ({ ...s, myItemStock }));
   };
 
-  const addToTotal = function () {
+  const addToTotal = async function () {
+    const newTotal = parseInt(total) + parseInt(updateQuantity);
     setState((s) => ({
       ...s,
       myItemStock: {
         ...myItemStock,
-        total: parseInt(total) + parseInt(updateQuantity)
+        total: newTotal
       }
     }));
-
     setUpdateQuantity('');
+    await update(newTotal);
   };
 
-  const subtractToTotal = function () {
+  const subtractToTotal = async function () {
+    const newTotal = parseInt(total) - parseInt(updateQuantity)
     setState((s) => ({
       ...s,
       myItemStock: {
         ...myItemStock,
-        total: parseInt(total) - parseInt(updateQuantity)
+        total: newTotal
       }
     }));
     setUpdateQuantity('');
+    await update(newTotal);
+
+  };
+
+  const update = async function (newTotal) {
+    const data = {
+      total: newTotal
+    };
+
+    await makeRequest({
+      method: 'put',
+      data,
+      url: `/stock/${id}`
+    });
+
+    setState((s) => ({ ...s, refresh: refresh + 1 }));
   };
 
   const save = async function () {
@@ -63,24 +86,19 @@ function ModalStock(props) {
       total
     };
 
-    if (operation == 2) {
-      await sendStock({
-        method: 'put',
-        data,
-        url: `/stock/${id}`,
-        closeModal: false
-      });
+    data.itemId = selectedItem;
+    data.initialStock = initialStock;
 
-    } else {
-      data.itemId = selectedItem;
-      data.initialStock = initialStock;
+    await makeRequest({
+      method: 'post',
+      data,
+      url: '/stock',
+      alertResult: true,
+      closeModal: true,
+      modalId
+    });
 
-      await sendStock({
-        method: 'post',
-        data,
-        url: '/stock'
-      });
-    };
+    setState((s) => ({ myItemStock: _.cloneDeep(emptyItemStock), refresh: refresh + 1 }));
 
     document.getElementById('item-list').selectedIndex = 0;
   };
@@ -94,18 +112,17 @@ function ModalStock(props) {
             <button type='button' className='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
           </div>
           <div className='modal-body'>
-            <input type='hidden' id='id'></input>
             <label>Nombre de Producto</label>
             <div className='input-group mb-3' hidden={operation == 1}>
               <span className='input-group-text'><i className='fa-solid fa-bars'></i></span>
-              <input type='text' id='name' className='form-control' placeholder='Nombre de Producto' value={productName} disabled={operation == 2}></input>
+              <input type='text' id='name' className='form-control' placeholder='Nombre de Producto' defaultValue={productName} disabled={operation == 2}></input>
             </div>
             <div className='input-group mb-3' hidden={operation != 1}>
               <select id='item-list' className='form-control' onChange={(e) => setSelectItem(e.target.value)}>
-                <option selected>Seleccionar producto</option>
+                <option>Seleccionar producto</option>
                 {
                   filteredProducts.map((i) => (
-                    <option value={i.id}>{i.name}</option>
+                    <option key={i.name} value={i.id}>{i.name}</option>
                   ))
                 }
               </select>
@@ -131,7 +148,7 @@ function ModalStock(props) {
           </div>
           <div className='modal-footer'>
             <button onClick={() => save()} className='btn btn-success' hidden={operation != 1}><i className='fa-solid fa-floppy-disk'></i> Guardar</button>
-            <button id='closeModalStock' type='button' className='btn btn-secondary' data-bs-dismiss='modal'>Cerrar</button>
+            <button id={modalId} type='button' className='btn btn-secondary' data-bs-dismiss='modal'>Cerrar</button>
           </div>
         </div>
       </div>

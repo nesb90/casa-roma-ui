@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
-import getAxios from '../../common/axios'
+import { makeRequest } from '../../common/axios';
 import { showAlert, parseCurrency } from '../../common';
 import _ from 'lodash';
+
+const modalId = 'closeModalItem';
 
 const emptyItem = {
   id: 0,
@@ -13,8 +15,6 @@ const emptyItem = {
 }
 
 function Items() {
-  const axios = getAxios();
-
   const [items, setItems] = useState([]);
   const [state, setState] = useState({
     myItem: _.cloneDeep(emptyItem),
@@ -37,70 +37,55 @@ function Items() {
   } = myItem
 
   const getItems = async function () {
-    const response = await axios.get(`/item`);
-    setItems(response.data);
-  };
-
-  const makeRequest = async function ({ method, data, url, closeModal = true }) {
-    try {
-      const response = await axios.request({
-        method, data, url
-      });
-
-      showAlert({ message: response.data.message, icon: 'success' });
-      if (closeModal) {
-        document.getElementById('closeModalItem').click();
-      }
-
-      return response.data;
-    } catch (error) {
-      const { message } = error.response.data;
-      showAlert({ message, icon: 'error' })
-      console.log(error)
-    }
+    const response = await makeRequest({
+      method: 'get',
+      url: `/item`
+    });
+    setItems(response);
   };
 
   const sendItems = async function () {
-    switch (operation) {
-      case 1:
-        await makeRequest({
-          method: 'post',
-          url: `/item`,
-          data: {
-            name,
-            description,
-            rentPrice,
-            itemPrice
-          }
-        });
+    if (operation === 1) {
+      await makeRequest({
+        method: 'post',
+        url: `/item`,
+        data: {
+          name,
+          description,
+          rentPrice,
+          itemPrice
+        },
+        alertResult: true,
+        closeModal: true,
+        modalId
+      });
 
-        setState((s) => ({
-          ...s,
-          myItem: _.cloneDeep(emptyItem),
-          refresh: refresh + 1
-        }));
-        break;
-      case 2:
-        await makeRequest({
-          method: 'put',
-          url: `/item/${id}`,
-          data: {
-            name,
-            description,
-            rentPrice,
-            itemPrice
-          }
-        });
+      setState((s) => ({
+        ...s,
+        myItem: _.cloneDeep(emptyItem),
+        refresh: refresh + 1
+      }));
+    } else if (operation === 2) {
+      await makeRequest({
+        method: 'put',
+        url: `/item/${id}`,
+        data: {
+          name,
+          description,
+          rentPrice,
+          itemPrice
+        },
+        alertResult: true,
+        closeModal: true,
+        modalId
+      });
 
-        setState((s) => ({
-          ...s,
-          myItem: _.cloneDeep(emptyItem),
-          refresh: refresh + 1
-        }));
-        break;
-      default:
-        break;
-    }
+      setState((s) => ({
+        ...s,
+        myItem: _.cloneDeep(emptyItem),
+        refresh: refresh + 1
+      }));
+    };
   };
 
   const deleteItem = function (id, name) {
@@ -113,7 +98,7 @@ function Items() {
       cancelButtonText: 'Cancelar'
     }).then(async (result) => {
       if (result.isConfirmed) {
-        await axios.delete(`/item/${id}`);
+        await makeRequest({ url:`/item/${id}`, method: 'delete' });
         getItems();
       } else {
         showAlert({ message: 'Producto no eliminado', icon: 'info' });
