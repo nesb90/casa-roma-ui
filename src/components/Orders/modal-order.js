@@ -1,6 +1,8 @@
 /* eslint-disable eqeqeq */
 import React, { useState } from 'react';
+
 import { parseCurrency } from '../../common';
+import { operations } from '../../config/constants';
 
 function ModalOrder (props) {
   const [selectedItem, setSelectItem] = useState('');
@@ -35,8 +37,8 @@ function ModalOrder (props) {
         id: orderItem.id,
         name: itemData.name,
         quantity: orderItem.quantity,
-        itemPrice: itemData.itemPrice,
-        total: itemData.itemPrice * orderItem.quantity
+        rentPrice: itemData.rentPrice,
+        total: itemData.rentPrice * orderItem.quantity
       };
     });
   } else {
@@ -64,7 +66,7 @@ function ModalOrder (props) {
       quantity
     };
     const productData = products.find((prod) => prod.id === parseInt(selectedItem));
-    if (operation === 2) {
+    if (operation === operations.UPDATE) {
       data.orderId = orderId
       const result = await createOrderItem({
         data
@@ -99,7 +101,7 @@ function ModalOrder (props) {
   }
 
   const deleteOrderItem = async ({ itemId, itemIndex }) => {
-    if (operation === 2) {
+    if (operation === operations.UPDATE) {
       await makeRequest({
         method: 'delete',
         url: `/order-item/${(itemId)}`,
@@ -161,20 +163,20 @@ function ModalOrder (props) {
               <span className='input-group-text'><i className='fa-solid fa-user'></i></span>
               <input disabled={isCancelled || !!returnedAt} type='text' id='customerName' className='form-control' placeholder='Nombre del Cliente' value={customerName} onChange={(e) => setCustomerName(e.target.value)}></input>
             </div>
-            <label>Direccion de evento</label>
+            <label>Dirección de evento</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-location-dot'></i></span>
-              <input disabled={isCancelled || !!returnedAt} type='text' id='address' className='form-control' placeholder='Direccion del Evento' value={address} onChange={(e) => setAddress(e.target.value)}></input>
+              <input disabled={isCancelled || !!returnedAt} type='text' id='address' className='form-control' placeholder='Dirección del Evento' value={address} onChange={(e) => setAddress(e.target.value)}></input>
             </div>
             <label>Fecha del Evento</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-calendar-days'></i></span>
               <input disabled={isCancelled || !!returnedAt} type='datetime-local' id='eventDate' className='form-control' placeholder='Fecha del Evento' value={getDate(eventDate)} onChange={(e) => setEventDate(e.target.value)}></input>
             </div>
-            <label>Fecha de Devolucion</label>
+            <label>Fecha de Devolución</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-calendar-days'></i></span>
-              <input disabled={operation === 1 || isCancelled || !!returnedAt} type='date' id='returnedAt' className='form-control' placeholder='Fecha de Devolucion' value={getDate(returnedAt)} onChange={(e) => setReturnedAt(e.target.value)}></input>
+              <input disabled={operation === operations.CREATE || isCancelled || !!returnedAt} type='datetime-local' id='returnedAt' className='form-control' placeholder='Fecha de Devolución' value={getDate(returnedAt)} onChange={(e) => setReturnedAt(e.target.value)}></input>
             </div>
             <label>Productos</label>
             <div className='input-group mb-3'>
@@ -211,7 +213,7 @@ function ModalOrder (props) {
                           {item.quantity}
                         </td>
                         <td className="text-end">
-                          ${parseCurrency(item.itemPrice)}
+                          ${parseCurrency(item.rentPrice)}
                         </td>
                         <td className="text-end">
                           ${parseCurrency(item.total)}

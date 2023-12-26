@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import _ from 'lodash';
 
 import { makeRequest } from '../../common/axios';
 import { showAlert, parseCurrency } from '../../common';
-import _ from 'lodash';
+import { operations } from '../../config/constants';
 
 const modalId = 'closeModalItem';
 
@@ -45,7 +46,7 @@ function Items() {
   };
 
   const sendItems = async function () {
-    if (operation === 1) {
+    if (operation === operations.CREATE) {
       await makeRequest({
         method: 'post',
         url: `/item`,
@@ -65,7 +66,7 @@ function Items() {
         myItem: _.cloneDeep(emptyItem),
         refresh: refresh + 1
       }));
-    } else if (operation === 2) {
+    } else {
       await makeRequest({
         method: 'put',
         url: `/item/${id}`,
@@ -92,7 +93,7 @@ function Items() {
     showAlert({
       message: `¿Seguro de eliminar ${name}?`,
       icon: 'question',
-      text: 'Esta accion no se puede revertir',
+      text: 'Esta acción no se puede revertir',
       showCancelButton: true,
       confirmButtonText: 'Si, eliminar',
       cancelButtonText: 'Cancelar'
@@ -115,12 +116,12 @@ function Items() {
     itemPrice
   }) {
     setOperation(op);
-    if (op === 1) {
+    if (op === operations.CREATE) {
       setTitle('Agregar Producto');
       setState((s) => ({
         myItem: _.cloneDeep(emptyItem)
       }));
-    } else if (op === 2) {
+    } else {
       setTitle('Editar Producto');
       setState((s) => ({
         myItem: {
@@ -172,7 +173,7 @@ function Items() {
               <h3>Productos</h3>
             </div>
             <div className='col text-end'>
-            <button className='btn btn-success' onClick={() => openModal({ op: 1 })} data-bs-toggle='modal' data-bs-target='#modalItem'>
+            <button className='btn btn-success' onClick={() => openModal({ op: operations.CREATE })} data-bs-toggle='modal' data-bs-target='#modalItem'>
               <i className='fa-solid fa-circle-plus'></i> Crear Producto
             </button>
             </div>
@@ -187,7 +188,7 @@ function Items() {
                 <tr className="text-center">
                   <th>#</th>
                   <th>Producto</th>
-                  <th>Descripcion</th>
+                  <th>Descripción</th>
                   <th>Precio de Renta</th>
                   <th>Precio de Compra</th>
                   <th />
@@ -204,7 +205,7 @@ function Items() {
                       <td className="text-end">${parseCurrency(item.itemPrice)}</td>
                       <td className="text-center">
                         <button onClick={() => openModal({
-                          op: 2,
+                          op: operations.UPDATE,
                           id: item.id,
                           name: item.name,
                           description: item.description,
@@ -241,20 +242,20 @@ function Items() {
                 <span className='input-group-text'><i className='fa-solid fa-bars'></i></span>
                 <input type='text' id='name' className='form-control' placeholder='Nombre de Producto' value={name} onChange={(e) => setName(e.target.value)}></input>
               </div>
-              <label>Descripcion</label>
+              <label>Descripción</label>
               <div className='input-group mb-3'>
                 <span className='input-group-text'><i className='fa-solid fa-bars'></i></span>
-                <input type='text' id='description' className='form-control' placeholder='Descripcion' value={description} onChange={(e) => setDescription(e.target.value)}></input>
-              </div>
-              <label>Precio de Renta</label>
-              <div className='input-group mb-3'>
-                <span className='input-group-text'><i className='fa-solid fa-dollar-sign'></i></span>
-                <input type='number' id='rentPrice' className='form-control' placeholder='Precio De Renta' value={rentPrice} onChange={(e) => setRentPrice(e.target.value)}></input>
+                <input type='text' id='description' className='form-control' placeholder='Descripción' value={description} onChange={(e) => setDescription(e.target.value)}></input>
               </div>
               <label>Precio de Compra</label>
               <div className='input-group mb-3'>
                 <span className='input-group-text'><i className='fa-solid fa-dollar-sign'></i></span>
                 <input type='number' id='itemPrice' className='form-control' placeholder='Precio de Compra' value={itemPrice} onChange={(e) => setItemPrice(e.target.value)}></input>
+              </div>
+              <label>Precio de Renta</label>
+              <div className='input-group mb-3'>
+                <span className='input-group-text'><i className='fa-solid fa-dollar-sign'></i></span>
+                <input type='number' id='rentPrice' className='form-control' placeholder='Precio De Renta' value={rentPrice} onChange={(e) => setRentPrice(e.target.value)}></input>
               </div>
             </div>
             <div className='modal-footer'>

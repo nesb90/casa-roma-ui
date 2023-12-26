@@ -3,6 +3,7 @@ import _ from 'lodash';
 
 import { showAlert } from '../../common';
 import { makeRequest } from '../../common/axios';
+import { operations } from '../../config/constants';
 
 import ModalOrder from './modal-order';
 import ModalPayment from '../Payments/modal-payment';
@@ -29,12 +30,12 @@ const emptyPayment = {
 //   completed: false
 // };
 const modalId = 'closeModalOrder';
-const orderStatuses = {
-  orderReceived: 'ORDEN_RECIBIDA',
-  processingOrder: 'PROCESANDO_ORDEN',
-  cancelled: 'ORDEN_CANCELADA',
-  completed: 'ORDEN_COMPLETADA'
-};
+// const orderStatuses = {
+//   orderReceived: 'ORDEN_RECIBIDA',
+//   processingOrder: 'PROCESANDO_ORDEN',
+//   cancelled: 'ORDEN_CANCELADA',
+//   completed: 'ORDEN_COMPLETADA'
+// };
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -48,22 +49,9 @@ const Orders = () => {
     refresh: 0
   });
 
-  const getOrderStatus = function ({
-    isCancelled,
-    returnedAt
-  }) {
-    if (isCancelled) {
-      return orderStatuses.cancelled;
-    } else if (returnedAt) {
-      return orderStatuses.completed;
-    } else {
-      return orderStatuses.orderReceived;
-    };
-  };
-
   const getOrderId = function (databaseId) {
     return `CRE-${databaseId.toLocaleString('es-MX', {
-      minimumIntegerDigits: 2,
+      minimumIntegerDigits: 7,
       useGrouping: false
     })}`;
   };
@@ -114,10 +102,10 @@ const Orders = () => {
     items
   }) {
     setOperation(op);
-    if (op === 1) {
+    if (op === operations.CREATE) {
       setTitle('Crear Orden');
       setState((s) => ({ ...s, myOrder: _.cloneDeep(emptyOrder) }));
-    } else if (op === 2) {
+    } else if (op === operations.UPDATE) {
       setTitle('Editar Orden');
       setState((s) => ({
         ...s,
@@ -149,7 +137,7 @@ const Orders = () => {
   };
 
   const sendOrder = async function () {
-    if (operation === 1) {
+    if (operation === operations.CREATE) {
       await makeRequest({
         method: 'post',
         url: '/order',
@@ -166,7 +154,7 @@ const Orders = () => {
         myOrder: _.cloneDeep(emptyOrder),
         refresh: refresh + 1
       }));
-    } else if (operation === 2) {
+    } else if (operation === operations.UPDATE) {
       await makeRequest({
         method: 'put',
         url: `/order/${id}`,
@@ -187,7 +175,7 @@ const Orders = () => {
     showAlert({
       message: `¿Seguro de eliminar la orden ${getOrderId(id)}?`,
       icon: 'question',
-      text: 'Esta accion no se puede revertir',
+      text: 'Esta acción no se puede revertir',
       showCancelButton: true,
       confirmButtonText: 'Si, eliminar',
       cancelButtonText: 'Cancelar'
@@ -205,7 +193,7 @@ const Orders = () => {
     showAlert({
       message: `¿Seguro de cancelar la orden ${getOrderId(id)}?`,
       icon: 'question',
-      text: 'Esta accion no se puede revertir',
+      text: 'Esta acción no se puede revertir',
       showCancelButton: true,
       confirmButtonText: 'Si, cancelar',
       cancelButtonText: 'Salir'
@@ -267,7 +255,7 @@ const Orders = () => {
               <h3>Ordenes</h3>
             </div>
             <div className='col text-end'>
-              <button className='btn btn-success' onClick={() => openModal({ op: 1 })} data-bs-toggle='modal' data-bs-target='#modalOrder'>
+              <button className='btn btn-success' onClick={() => openModal({ op: operations.CREATE })} data-bs-toggle='modal' data-bs-target='#modalOrder'>
                 <i className='fa-solid fa-circle-plus'></i> Crear Orden
               </button>
             </div>
@@ -282,10 +270,9 @@ const Orders = () => {
                 <tr className="text-center">
                   <th>#</th>
                   <th>Nombre del Cliente</th>
-                  <th>Direccion del Evento</th>
+                  <th>Dirección del Evento</th>
                   <th>Fecha del Evento</th>
                   <th>Fecha Devolución</th>
-                  <th>Estatus de Orden</th>
                   <th>Fecha de Creación</th>
                   <th />
                 </tr>
@@ -299,14 +286,10 @@ const Orders = () => {
                       <td>{order.address}</td>
                       <td className='text-center'>{parseDate(order.eventDate)}</td>
                       <td className='text-center'>{parseDate(order.returnedAt)}</td>
-                      <td className='text-center'>{getOrderStatus({
-                        isCancelled: order.isCancelled,
-                        returnedAt: order.returnedAt
-                      })}</td>
                       <td className='text-center'>{parseDate(order.createdAt)}</td>
                       <td className='text-center'>
                         <button onClick={() => openModal({
-                          op: 2,
+                          op: operations.UPDATE,
                           id: order.id,
                           customerName: order.customerName,
                           address: order.address,
