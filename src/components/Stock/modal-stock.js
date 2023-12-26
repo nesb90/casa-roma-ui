@@ -2,8 +2,6 @@
 import React, { useState } from "react";
 import _ from "lodash";
 
-import { operations } from "../../config/constants";
-
 const modalId = 'closeModalStock'
 
 function ModalStock(props) {
@@ -115,11 +113,11 @@ function ModalStock(props) {
           </div>
           <div className='modal-body'>
             <label>Nombre de Producto</label>
-            <div className='input-group mb-3' hidden={operation == operations.CREATE}>
+            <div className='input-group mb-3' hidden={operation == 1}>
               <span className='input-group-text'><i className='fa-solid fa-bars'></i></span>
               <input type='text' id='name' className='form-control' placeholder='Nombre de Producto' defaultValue={productName} disabled={operation == 2}></input>
             </div>
-            <div className='input-group mb-3' hidden={operation != operations.CREATE}>
+            <div className='input-group mb-3' hidden={operation != 1}>
               <select id='item-list' className='form-control' onChange={(e) => setSelectItem(e.target.value)}>
                 <option>Seleccionar producto</option>
                 {
@@ -132,14 +130,14 @@ function ModalStock(props) {
             <label>Stock Inicial</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-hashtag'></i></span>
-              <input type='number' id='description' className='form-control' placeholder='Stock Inicial' value={initialStock} disabled={operation == operations.UPDATE} onChange={(e) => setInitialStock(e.target.value)}></input>
+              <input type='number' id='description' className='form-control' placeholder='Stock Inicial' value={initialStock} disabled={operation == 2} onChange={(e) => setInitialStock(e.target.value)}></input>
             </div>
             <label>Stock Actual</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-hashtag'></i></span>
               <input type='number' id='rentPrice' className='form-control' placeholder='Stock Actual' value={total} disabled={true} onChange={(e) => setTotal(e.target.value)}></input>
             </div>
-            <div hidden={operation == operations.CREATE}>
+            <div hidden={operation == 1}>
               <label>Agregar o Quitar</label>
               <div className='input-group mb-3'>
                 <input type='number' className='form-control' placeholder='Cantidad' value={updateQuantity} onChange={(e) => setUpdateQuantity(e.target.value)}></input>
@@ -149,7 +147,7 @@ function ModalStock(props) {
             </div>
           </div>
           <div className='modal-footer'>
-            <button onClick={() => save()} className='btn btn-success' hidden={operation != operations.CREATE}><i className='fa-solid fa-floppy-disk'></i> Guardar</button>
+            <button onClick={() => save()} className='btn btn-success' hidden={operation != 1}><i className='fa-solid fa-floppy-disk'></i> Guardar</button>
             <button id={modalId} type='button' className='btn btn-secondary' data-bs-dismiss='modal'>Cerrar</button>
           </div>
         </div>

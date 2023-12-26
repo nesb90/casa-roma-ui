@@ -4,7 +4,6 @@ import _ from 'lodash';
 
 import { makeRequest } from "../../common/axios";
 import { showAlert } from "../../common";
-import { operations } from "../../config/constants";
 import ModalStock from "./modal-stock";
 
 const emptyItemStock = {
@@ -41,9 +40,7 @@ function Stock() {
         productName: productData.name,
         productId: productData.id,
         initialStock: itemStock.initialStock,
-        total: itemStock.total,
-        availableStock: itemStock.availableStock,
-        rented: itemStock.total - itemStock.availableStock
+        total: itemStock.total
       };
     });
   } else {
@@ -75,10 +72,10 @@ function Stock() {
     total
   }) {
     setOperation(op);
-    if (op === operations.CREATE) {
+    if (op === 1) {
       setTitle('Crear Stock');
       setState((s) => ({ ...s, myItemStock: _.cloneDeep(emptyItemStock) }));
-    } else {
+    } else if (op === 2) {
       setTitle('Editar Stock');
       setState((s) => ({
         ...s, myItemStock: {
@@ -90,9 +87,9 @@ function Stock() {
 
   const deleteItemStock = async function (id, item) {
     showAlert({
-      message: `¿Seguro de eliminar Stock para el producto: ${item}?`,
+      message: `¿Seguro de Stock para el producto: ${item}?`,
       icon: 'question',
-      text: 'Esta acción no se puede revertir',
+      text: 'Esta accion no se puede revertir',
       showCancelButton: true,
       confirmButtonText: 'Si, eliminar',
       cancelButtonText: 'Cancelar'
@@ -121,7 +118,7 @@ function Stock() {
               <h3>Inventario</h3>
             </div>
             <div className='col text-end'>
-              <button className='btn btn-success' onClick={() => openModal({ op: operations.CREATE })} data-bs-toggle='modal' data-bs-target='#modalStock'>
+              <button className='btn btn-success' onClick={() => openModal({ op: 1 })} data-bs-toggle='modal' data-bs-target='#modalStock'>
                 <i className='fa-solid fa-circle-plus'></i> Crear Stock
               </button>
             </div>
@@ -138,8 +135,6 @@ function Stock() {
                   <th>Producto</th>
                   <th>Stock Inicial</th>
                   <th>Stock Actual</th>
-                  <th>Stock Disponible</th>
-                  <th>Rentado</th>
                   <th />
                 </tr>
               </thead>
@@ -151,11 +146,9 @@ function Stock() {
                       <td>{item.productName}</td>
                       <td className="text-center">{item.initialStock}</td>
                       <td className="text-center">{item.total}</td>
-                      <td className="text-center">{item.availableStock}</td>
-                      <td className="text-center">{item.rented}</td>
                       <td className="text-center">
                         <button onClick={() => openModal({
-                          op: operations.UPDATE,
+                          op: 2,
                           id: item.id,
                           productName: item.productName,
                           initialStock: item.initialStock,

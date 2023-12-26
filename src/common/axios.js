@@ -3,17 +3,18 @@ import axios from 'axios';
 import { SERVER } from '../config';
 import { showAlert } from '.';
 
-const instance = axios.create({
-  baseURL: `${SERVER.url}${SERVER.apiPath}`
-});
-
 function getAxios () {
-  return instance;
+  const instance = axios.create({
+    baseURL: `${SERVER.url}${SERVER.apiPath}`
+  });
+
+  return instance
 };
 
 async function makeRequest ({ method, data, url, closeModal = false, modalId, alertResult = false }) {
   try {
-    const response = await instance.request({
+    const axiosInstance = getAxios()
+    const response = await axiosInstance.request({
       method, data, url
     });
 
