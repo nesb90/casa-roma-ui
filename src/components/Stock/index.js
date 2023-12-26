@@ -40,7 +40,9 @@ function Stock() {
         productName: productData.name,
         productId: productData.id,
         initialStock: itemStock.initialStock,
-        total: itemStock.total
+        total: itemStock.total,
+        availableStock: itemStock.availableStock,
+        rented: itemStock.total - itemStock.availableStock
       };
     });
   } else {
@@ -87,7 +89,7 @@ function Stock() {
 
   const deleteItemStock = async function (id, item) {
     showAlert({
-      message: `¿Seguro de Stock para el producto: ${item}?`,
+      message: `¿Seguro de eliminar Stock para el producto: ${item}?`,
       icon: 'question',
       text: 'Esta accion no se puede revertir',
       showCancelButton: true,
@@ -135,6 +137,8 @@ function Stock() {
                   <th>Producto</th>
                   <th>Stock Inicial</th>
                   <th>Stock Actual</th>
+                  <th>Stock Disponible</th>
+                  <th>Rentado</th>
                   <th />
                 </tr>
               </thead>
@@ -146,6 +150,8 @@ function Stock() {
                       <td>{item.productName}</td>
                       <td className="text-center">{item.initialStock}</td>
                       <td className="text-center">{item.total}</td>
+                      <td className="text-center">{item.availableStock}</td>
+                      <td className="text-center">{item.rented}</td>
                       <td className="text-center">
                         <button onClick={() => openModal({
                           op: 2,

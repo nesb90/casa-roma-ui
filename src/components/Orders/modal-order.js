@@ -174,7 +174,7 @@ function ModalOrder (props) {
             <label>Fecha de Devolucion</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-calendar-days'></i></span>
-              <input disabled={operation === 1 || isCancelled || !!returnedAt} type='date' id='returnedAt' className='form-control' placeholder='Fecha de Devolucion' value={getDate(returnedAt)} onChange={(e) => setReturnedAt(e.target.value)}></input>
+              <input disabled={operation === 1 || isCancelled || !!returnedAt} type='datetime-local' id='returnedAt' className='form-control' placeholder='Fecha de Devolucion' value={getDate(returnedAt)} onChange={(e) => setReturnedAt(e.target.value)}></input>
             </div>
             <label>Productos</label>
             <div className='input-group mb-3'>
