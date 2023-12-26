@@ -3,6 +3,7 @@ import _ from 'lodash';
 
 import { showAlert } from '../../common';
 import { makeRequest } from '../../common/axios';
+import { operations } from '../../config/constants';
 
 import ModalOrder from './modal-order';
 import ModalPayment from '../Payments/modal-payment';
@@ -35,10 +36,6 @@ const modalId = 'closeModalOrder';
 //   cancelled: 'ORDEN_CANCELADA',
 //   completed: 'ORDEN_COMPLETADA'
 // };
-const operations = {
-  CREATE: 'CREATE',
-  UPDATE: 'UPDATE'
-};
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -178,7 +175,7 @@ const Orders = () => {
     showAlert({
       message: `¿Seguro de eliminar la orden ${getOrderId(id)}?`,
       icon: 'question',
-      text: 'Esta accion no se puede revertir',
+      text: 'Esta acción no se puede revertir',
       showCancelButton: true,
       confirmButtonText: 'Si, eliminar',
       cancelButtonText: 'Cancelar'
@@ -196,7 +193,7 @@ const Orders = () => {
     showAlert({
       message: `¿Seguro de cancelar la orden ${getOrderId(id)}?`,
       icon: 'question',
-      text: 'Esta accion no se puede revertir',
+      text: 'Esta acción no se puede revertir',
       showCancelButton: true,
       confirmButtonText: 'Si, cancelar',
       cancelButtonText: 'Salir'
@@ -273,7 +270,7 @@ const Orders = () => {
                 <tr className="text-center">
                   <th>#</th>
                   <th>Nombre del Cliente</th>
-                  <th>Direccion del Evento</th>
+                  <th>Dirección del Evento</th>
                   <th>Fecha del Evento</th>
                   <th>Fecha Devolución</th>
                   <th>Fecha de Creación</th>

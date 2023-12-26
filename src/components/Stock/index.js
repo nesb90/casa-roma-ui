@@ -4,6 +4,7 @@ import _ from 'lodash';
 
 import { makeRequest } from "../../common/axios";
 import { showAlert } from "../../common";
+import { operations } from "../../config/constants";
 import ModalStock from "./modal-stock";
 
 const emptyItemStock = {
@@ -74,10 +75,10 @@ function Stock() {
     total
   }) {
     setOperation(op);
-    if (op === 1) {
+    if (op === operations.CREATE) {
       setTitle('Crear Stock');
       setState((s) => ({ ...s, myItemStock: _.cloneDeep(emptyItemStock) }));
-    } else if (op === 2) {
+    } else {
       setTitle('Editar Stock');
       setState((s) => ({
         ...s, myItemStock: {
@@ -91,7 +92,7 @@ function Stock() {
     showAlert({
       message: `¿Seguro de eliminar Stock para el producto: ${item}?`,
       icon: 'question',
-      text: 'Esta accion no se puede revertir',
+      text: 'Esta acción no se puede revertir',
       showCancelButton: true,
       confirmButtonText: 'Si, eliminar',
       cancelButtonText: 'Cancelar'
@@ -120,7 +121,7 @@ function Stock() {
               <h3>Inventario</h3>
             </div>
             <div className='col text-end'>
-              <button className='btn btn-success' onClick={() => openModal({ op: 1 })} data-bs-toggle='modal' data-bs-target='#modalStock'>
+              <button className='btn btn-success' onClick={() => openModal({ op: operations.CREATE })} data-bs-toggle='modal' data-bs-target='#modalStock'>
                 <i className='fa-solid fa-circle-plus'></i> Crear Stock
               </button>
             </div>
@@ -154,7 +155,7 @@ function Stock() {
                       <td className="text-center">{item.rented}</td>
                       <td className="text-center">
                         <button onClick={() => openModal({
-                          op: 2,
+                          op: operations.UPDATE,
                           id: item.id,
                           productName: item.productName,
                           initialStock: item.initialStock,
