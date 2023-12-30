@@ -14,7 +14,9 @@ function ModalPayment(props) {
     orderId,
     amount,
     payConcept,
-    payments
+    payments,
+    currentBalance,
+    orderTotal
   } = myPayment;
   let totalPayments
 
@@ -32,9 +34,11 @@ function ModalPayment(props) {
         url: `/payment/${paymentId}`,
         closeModal: false
       });
-    }
-
+    };
+    const paymentDeleted = payments.find((paymentId, index) => index === paymentIndex );
+    myPayment.currentBalance = currentBalance + paymentDeleted.amount;
     myPayment.payments = payments.filter((payment, index) => index !== paymentIndex);
+
     setState((s) => ({
       ...s,
       myPayment
@@ -64,6 +68,7 @@ function ModalPayment(props) {
     });
 
     myPayment.payments.push({ amount: Number(amount), payConcept });
+    myPayment.currentBalance = currentBalance - Number(amount);
 
     setState((s) => ({
       ...s,
@@ -84,13 +89,17 @@ function ModalPayment(props) {
             <button type='button' className='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
           </div>
           <div className='modal-body'>
-            <input type='hidden' id='id'></input>
-            <label>Cantidad</label>
+            <div className="input-group mb-3">
+              <span className="input-group-text">Total a pagar</span>
+              <input className="form-control text-end" type="text" value={`$${parseCurrency(orderTotal)}`} readOnly></input>
+              <span className="input-group-text">Saldo Actual</span>
+              <input className="form-control text-end" type="text" value={`$${parseCurrency(currentBalance)}`} readOnly></input>
+            </div>
+            <h6>Agregar Pago</h6>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-dollar-sign'></i></span>
               <input type='number' id='customerName' className='form-control' placeholder='Cantidad' value={amount} onChange={(e) => setAmount(e.target.value)}></input>
             </div>
-            <label>Concepto</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-bars'></i></span>
               <input type='text' id='address' className='form-control' placeholder='Concepto de pago' value={payConcept} onChange={(e) => setPayConcept(e.target.value)}></input>
@@ -98,7 +107,7 @@ function ModalPayment(props) {
               <i className='fa-solid fa-plus'></i> Agregar Pago
             </button>
             </div>
-            <label>Historial de Pagos</label>
+            <h6>Historial de Pagos</h6>
             <div className='input-group mb-3'>
               <table className='table table-striped table-bordered'>
                 <thead>
