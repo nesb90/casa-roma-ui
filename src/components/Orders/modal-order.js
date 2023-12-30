@@ -205,7 +205,7 @@ function ModalOrder (props) {
                 <tbody className='table-group-divider'>
                   {
                     mappedOrderItems.map((item, index) => (
-                      <tr>
+                      <tr key={item.id}>
                         <td>
                           {item.name}
                         </td>
