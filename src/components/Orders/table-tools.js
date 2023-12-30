@@ -21,7 +21,7 @@ function TableTools (props) {
 		<div>
 			<div className="col-2">
 				<div className='input-group'>
-					<span className="input-group-text">Filtrar:</span>
+					<div className="input-group-text"><i className="fa-solid fa-eye" aria-label="ver"></i></div>
 					<select id='filter-list' className='form-control' onChange={(e) => setFilter(e.target.value)}>
 						<option value={false}>Todas</option>
 						<option value='completed'>Completadas</option>

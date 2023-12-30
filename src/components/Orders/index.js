@@ -20,6 +20,8 @@ const emptyOrder = {
   items: []
 }
 const emptyPayment = {
+  currentBalance: '',
+  orderTotal: '',
   orderId: 0,
   amount: '',
   payConcept: '',
@@ -94,13 +96,15 @@ const Orders = () => {
 
   const getPayments = async function (orderId) {
     const response = await makeRequest({ url: `/order-payment/${orderId}`, method: 'get' });
-    myPayment.payments = response || [];
+    myPayment.currentBalance = response.currentBalance;
+    myPayment.orderTotal = response.orderTotal;
+    myPayment.payments = response.payments || [];
     setState((s) => ({
       ...s, myPayment
     }));
   };
 
-  const openModal = function ({
+  const openModal = async function ({
     op,
     id,
     customerName,
@@ -110,7 +114,7 @@ const Orders = () => {
     isCancelled,
     items
   }) {
-    getProducts();
+    await getProducts();
     setOperation(op);
     if (op === operations.CREATE) {
       setTitle('Crear Orden');
