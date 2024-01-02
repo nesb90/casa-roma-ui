@@ -3,15 +3,31 @@ const operations = {
   UPDATE: 'UPDATE'
 };
 
-const orderStatuses = {
-  orderReceived: 'ORDEN_RECIBIDA',
-  processingOrder: 'PROCESANDO_ORDEN',
-  cancelled: 'ORDEN_CANCELADA',
-  completed: 'ORDEN_COMPLETADA'
+const FILTERS = {
+  RECEIVED: 'Recibidas',
+  PROCESSING: 'Procesando',
+  CANCELLED: 'Canceladas',
+  COMPLETED: 'Completadas'
+};
+
+const TRANSLATED_ORDER_STATUSES = {
+  RECEIVED: 'RECIBIDA',
+  PROCESSING: 'PROCESANDO_ORDEN',
+  CANCELLED: 'ORDEN_CANCELADA',
+  COMPLETED: 'ORDEN_COMPLETADA'
+};
+
+const ORDER_STATUSES = {
+  RECEIVED: 'RECEIVED',
+  PROCESSING: 'PROCESSING',
+  CANCELLED: 'CANCELLED',
+  COMPLETED: 'COMPLETED'
 };
 
 
 module.exports = {
   operations,
-  orderStatuses
+  FILTERS,
+  ORDER_STATUSES,
+  TRANSLATED_ORDER_STATUSES
 };
