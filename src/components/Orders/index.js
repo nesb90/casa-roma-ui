@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import { showAlert } from '../../common';
 import { makeRequest } from '../../common/axios';
-import { operations } from '../../config/constants';
+import { ORDER_STATUSES, operations } from '../../config/constants';
 
 import TableTools from './table-tools';
 import OrdersTable from './orders-table';
@@ -16,7 +16,8 @@ const emptyOrder = {
   address: '',
   eventDate: '',
   returnedAt: '',
-  isCancelled: false,
+  status: '',
+  escrow: '',
   items: []
 }
 const emptyPayment = {
@@ -27,12 +28,8 @@ const emptyPayment = {
   payConcept: '',
   payments: []
 };
-const defaultFilters = {
-  startDate: '',
-  endDate: '',
-  cancelled: false,
-  completed: false
-};
+const defaultFilter = 'Todas'
+
 const modalId = 'closeModalOrder';
 
 const Orders = () => {
@@ -40,7 +37,7 @@ const Orders = () => {
   const [operation, setOperation] = useState(1);
   const [title, setTitle] = useState('');
   const [products, setProducts] = useState([]); // products = db items
-  const [filters, setFilters] = useState(_.cloneDeep(defaultFilters));
+  const [filter, setFilter] = useState(defaultFilter);
   const [state, setState] = useState({
     myPayment: _.cloneDeep(emptyPayment),
     myOrder: _.cloneDeep(emptyOrder),
@@ -55,30 +52,20 @@ const Orders = () => {
   };
 
   const { myOrder, refresh, myPayment } = state;
-  const {
-    startDate,
-    endDate,
-    cancelled,
-    completed
-  } = filters;
+
   let {
     id,
     customerName,
     address,
     eventDate,
     returnedAt,
-    isCancelled,
     items
   } = myOrder;
 
   const getOrdersUrl = function () {
     let url = '/order';
-    if (startDate && endDate) {
-      url = url.concat(`?startDate=${startDate}&endDate=${endDate}`);
-    } else if (cancelled) {
-      url = url.concat(`?cancelled=${cancelled}`);
-    } else if (completed) {
-      url = url.concat(`?completed=${completed}`)
+    if (filter !== defaultFilter) {
+      url = url.concat(`?status=${filter}`);
     };
 
     return url
@@ -216,7 +203,7 @@ const Orders = () => {
         await makeRequest({
           method: 'put',
           data: {
-            isCancelled: true
+            status: ORDER_STATUSES.CANCELLED
           },
           url: `/order/${id}`
         });
@@ -245,8 +232,15 @@ const Orders = () => {
     }))
   };
 
-  const getDefaultFilters = function () {
-    return _.cloneDeep(defaultFilters);
+  const getDefaultFilter = function () {
+    return defaultFilter;
+  };
+
+  const isCancelled = function (orderStatus = '') {
+    return orderStatus === ORDER_STATUSES.CANCELLED;
+  };
+  const isCompleted = function(orderStatus = '') {
+    return orderStatus === ORDER_STATUSES.COMPLETED
   };
 
   useEffect(function () {
@@ -272,8 +266,8 @@ const Orders = () => {
       </div>
       <div className='row mt-3'>
         <TableTools
-          getDefaultFilters={getDefaultFilters}
-          setFilters={setFilters}
+          getDefaultFilter={getDefaultFilter}
+          setFilter={setFilter}
           setState={setState}
           refresh={refresh}
         />
@@ -287,6 +281,8 @@ const Orders = () => {
           cancelOrder={cancelOrder}
           deleteOrder={deleteOrder}
           orders={orders}
+          isCancelled={isCancelled}
+          isCompleted={isCompleted}
         />
       </div>
       <div>
@@ -298,6 +294,8 @@ const Orders = () => {
           operation={operation}
           createOrderItem={createOrderItem}
           makeRequest={makeRequest}
+          isCancelled={isCancelled}
+          isCompleted={isCompleted}
           setState={setState} />
         <ModalPayment
           title={title}

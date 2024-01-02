@@ -3,6 +3,7 @@
 import React from "react";
 
 import { operations } from "../../config";
+import { parseCurrency } from "../../common";
 
 function OrdersTable(props) {
   const {
@@ -12,8 +13,11 @@ function OrdersTable(props) {
     openPaymentModal,
     cancelOrder,
     deleteOrder,
-    orders
+    orders,
+    isCancelled,
+    isCompleted
   } = props;
+
   return (
     <div className='col'>
       <div className='table-responsive'>
@@ -26,6 +30,7 @@ function OrdersTable(props) {
               <th>Fecha del Evento</th>
               <th>Fecha Devolución</th>
               <th>Fecha de Creación</th>
+              <th>Deposito</th>
               <th />
             </tr>
           </thead>
@@ -39,6 +44,7 @@ function OrdersTable(props) {
                   <td className='text-center'>{parseDate(order.eventDate)}</td>
                   <td className='text-center'>{parseDate(order.returnedAt)}</td>
                   <td className='text-center'>{parseDate(order.createdAt)}</td>
+                  <td className='text-end'>${parseCurrency(order.escrow)}</td>
                   <td className='text-center'>
                     <button onClick={() => openModal({
                       op: operations.UPDATE,
@@ -47,7 +53,8 @@ function OrdersTable(props) {
                       address: order.address,
                       eventDate: order.eventDate,
                       returnedAt: order.returnedAt,
-                      isCancelled: order.isCancelled,
+                      escrow: order.escrow,
+                      status: order.status,
                       items: order.items
                     })}
                       className='btn btn-primary' data-bs-toggle='modal' data-bs-target='#modalOrder'>
@@ -55,7 +62,7 @@ function OrdersTable(props) {
                     </button>
                     &nbsp;
                     <button
-                      disabled={order.isCancelled || !!order.returnedAt}
+                      disabled={isCancelled(order.status) || isCompleted(order.status)}
                       onClick={() => openPaymentModal(order.id)}
                       className='btn btn-secondary'
                       data-bs-toggle='modal' data-bs-target='#modalPayment'
@@ -63,11 +70,11 @@ function OrdersTable(props) {
                       <i className='fa-solid fa-money-bill'></i>
                     </button>
                     &nbsp;
-                    <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => cancelOrder(order.id, order.customerName)} className='btn btn-danger'>
+                    <button disabled={isCancelled(order.status) || isCompleted(order.status)} onClick={() => cancelOrder(order.id, order.customerName)} className='btn btn-danger'>
                       <i className='fa-solid fa-ban'></i>
                     </button>
                     &nbsp;
-                    <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => deleteOrder(order.id)} className='btn btn-dark'>
+                    <button disabled={isCancelled(order.status) || isCompleted(order.status)} onClick={() => deleteOrder(order.id)} className='btn btn-dark'>
                       <i className='fa-solid fa-trash'></i>
                     </button>
                   </td>

@@ -16,7 +16,9 @@ function ModalOrder (props) {
     operation,
     createOrderItem,
     setState,
-    makeRequest
+    makeRequest,
+    isCancelled,
+    isCompleted
   } = props;
   let {
     id: orderId,
@@ -24,7 +26,7 @@ function ModalOrder (props) {
     address,
     eventDate,
     returnedAt,
-    isCancelled,
+    status,
     items
   } = myOrder
   let orderTotal = 0
@@ -161,26 +163,26 @@ function ModalOrder (props) {
             <label>Nombre del Cliente</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-user'></i></span>
-              <input disabled={isCancelled || !!returnedAt} type='text' id='customerName' className='form-control' placeholder='Nombre del Cliente' value={customerName} onChange={(e) => setCustomerName(e.target.value)}></input>
+              <input disabled={isCancelled(status) || isCompleted(status)} type='text' id='customerName' className='form-control' placeholder='Nombre del Cliente' value={customerName} onChange={(e) => setCustomerName(e.target.value)}></input>
             </div>
             <label>Dirección de evento</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-location-dot'></i></span>
-              <input disabled={isCancelled || !!returnedAt} type='text' id='address' className='form-control' placeholder='Dirección del Evento' value={address} onChange={(e) => setAddress(e.target.value)}></input>
+              <input disabled={isCancelled(status) || isCompleted(status)} type='text' id='address' className='form-control' placeholder='Dirección del Evento' value={address} onChange={(e) => setAddress(e.target.value)}></input>
             </div>
             <label>Fecha del Evento</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-calendar-days'></i></span>
-              <input disabled={isCancelled || !!returnedAt} type='datetime-local' id='eventDate' className='form-control' placeholder='Fecha del Evento' value={getDate(eventDate)} onChange={(e) => setEventDate(e.target.value)}></input>
+              <input disabled={isCancelled(status) || isCompleted(status)} type='datetime-local' id='eventDate' className='form-control' placeholder='Fecha del Evento' value={getDate(eventDate)} onChange={(e) => setEventDate(e.target.value)}></input>
             </div>
             <label>Fecha de Devolución</label>
             <div className='input-group mb-3'>
               <span className='input-group-text'><i className='fa-solid fa-calendar-days'></i></span>
-              <input disabled={operation === operations.CREATE || isCancelled || !!returnedAt} type='datetime-local' id='returnedAt' className='form-control' placeholder='Fecha de Devolución' value={getDate(returnedAt)} onChange={(e) => setReturnedAt(e.target.value)}></input>
+              <input disabled={operation === operations.CREATE || isCancelled(status) || isCompleted(status) } type='datetime-local' id='returnedAt' className='form-control' placeholder='Fecha de Devolución' value={getDate(returnedAt)} onChange={(e) => setReturnedAt(e.target.value)}></input>
             </div>
             <label>Productos</label>
             <div className='input-group mb-3'>
-              <select disabled={isCancelled || !!returnedAt} id='item-list' className='form-control' onChange={(e) => setSelectItem(e.target.value)}>
+              <select disabled={isCancelled(status) || isCompleted(status)} id='item-list' className='form-control' onChange={(e) => setSelectItem(e.target.value)}>
                 <option>Seleccionar producto</option>
                 {
                   products.map((i) => (
@@ -188,8 +190,8 @@ function ModalOrder (props) {
                   ))
                 }
               </select>
-              <input disabled={isCancelled || !!returnedAt} type='number' className='form-control' placeholder='Cantidad' value={quantity} onChange={(e) => setQuantity(e.target.value)}></input>
-              <button disabled={isCancelled || !!returnedAt} className="btn btn-outline-primary" type='button' onClick={() => addItem()}>Agregar</button>
+              <input disabled={isCancelled(status) || isCompleted(status)} type='number' className='form-control' placeholder='Cantidad' value={quantity} onChange={(e) => setQuantity(e.target.value)}></input>
+              <button disabled={isCancelled(status) || isCompleted(status)} className="btn btn-outline-primary" type='button' onClick={() => addItem()}>Agregar</button>
             </div>
             <div className='input-group mb-3'>
               <table className='table table-striped table-bordered'>
@@ -219,7 +221,7 @@ function ModalOrder (props) {
                           ${parseCurrency(item.total)}
                         </td>
                         <td className='text-center'>
-                          <button disabled={isCancelled || !!returnedAt} onClick={() => deleteOrderItem({ itemId: item.id, itemIndex: index })} className='btn btn-danger'>
+                          <button disabled={isCancelled(status) || isCompleted(status)} onClick={() => deleteOrderItem({ itemId: item.id, itemIndex: index })} className='btn btn-danger'>
                             <i className='fa-solid fa-trash'></i>
                           </button>
                         </td>
@@ -236,7 +238,7 @@ function ModalOrder (props) {
             </div>
           </div>
           <div className='modal-footer'>
-            <button disabled={isCancelled} onClick={() => saveOrder()} className='btn btn-success'>
+            <button disabled={isCancelled(status) || isCompleted(status)} onClick={() => saveOrder()} className='btn btn-success'>
               <i className='fa-solid fa-floppy-disk'></i> Guardar
             </button>
             <button id='closeModalOrder' type='button' className='btn btn-secondary' data-bs-dismiss='modal'>Cerrar</button>
