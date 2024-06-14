@@ -1,9 +1,9 @@
 import React from "react";
 import { ORDER_STATUSES, FILTERS } from "../../config";
 
-function TableTools (props) {
+function TableTools(props) {
 	const {
-    getDefaultFilter,
+		getDefaultFilter,
 		setFilter,
 		setState,
 		refresh
@@ -21,11 +21,11 @@ function TableTools (props) {
 					<div className="input-group-text"><i className="fa-solid fa-eye" aria-label="ver"></i></div>
 					<select id='filter-list' className='form-control' onChange={(e) => getOrders(e.target.value)}>
 						<option value={getDefaultFilter()}>Todas</option>
-            {
-              Object.keys(ORDER_STATUSES).map((status => (
-                <option value={status}>{ FILTERS[status] }</option>
-              )))
-            }
+						{
+							Object.keys(ORDER_STATUSES).map((status => (
+								<option value={status}>{FILTERS[status]}</option>
+							)))
+						}
 					</select>
 				</div>
 			</div>

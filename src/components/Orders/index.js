@@ -15,8 +15,8 @@ const emptyOrder = {
   customerName: '',
   address: '',
   eventDate: '',
-  returnedAt: '',
   status: '',
+  returnedAt: '',
   escrow: '',
   items: []
 }
@@ -98,7 +98,8 @@ const Orders = () => {
     address,
     eventDate,
     returnedAt,
-    isCancelled,
+    status,
+    escrow,
     items
   }) {
     await getProducts();
@@ -115,8 +116,9 @@ const Orders = () => {
           customerName,
           address,
           eventDate,
+          status,
           returnedAt,
-          isCancelled,
+          escrow,
           items
         }
       }
@@ -143,7 +145,7 @@ const Orders = () => {
         method: 'post',
         url: '/order',
         data: {
-          customerName, address, eventDate, returnedAt, isCancelled, items
+          customerName, address, eventDate, status: ORDER_STATUSES.RECEIVED, items
         },
         alertResult: true,
         closeModal: true,
@@ -159,7 +161,7 @@ const Orders = () => {
       await makeRequest({
         method: 'put',
         url: `/order/${id}`,
-        data: { customerName, address, eventDate, returnedAt, isCancelled },
+        data: { customerName, address, eventDate, returnedAt },
         alertResult: true,
         closeModal: true,
         modalId

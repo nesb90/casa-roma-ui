@@ -24,7 +24,7 @@ function OrdersTable(props) {
         <table id="ordersTable" className='table table-bordered table-striped'>
           <thead>
             <tr className="text-center">
-              <th>#</th>
+              <th>Orden #</th>
               <th>Nombre del Cliente</th>
               <th>Dirección del Evento</th>
               <th>Fecha del Evento</th>
@@ -41,9 +41,9 @@ function OrdersTable(props) {
                   <td className="text-center">{getOrderId(order.id)}</td>
                   <td>{order.customerName}</td>
                   <td>{order.address}</td>
-                  <td className='text-center'>{parseDate(order.eventDate)}</td>
-                  <td className='text-center'>{parseDate(order.returnedAt)}</td>
-                  <td className='text-center'>{parseDate(order.createdAt)}</td>
+                  <td>{parseDate(order.eventDate)}</td>
+                  <td>{parseDate(order.returnedAt)}</td>
+                  <td>{parseDate(order.createdAt)}</td>
                   <td className='text-end'>${parseCurrency(order.escrow)}</td>
                   <td className='text-center'>
                     <button onClick={() => openModal({
