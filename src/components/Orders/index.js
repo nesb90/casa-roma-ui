@@ -3,8 +3,10 @@ import _ from 'lodash';
 
 import { showAlert } from '../../common';
 import { makeRequest } from '../../common/axios';
-import { operations } from '../../config/constants';
+import { ORDER_STATUSES, operations } from '../../config/constants';
 
+import TableTools from './table-tools';
+import OrdersTable from './orders-table';
 import ModalOrder from './modal-order';
 import ModalPayment from '../Payments/modal-payment';
 
@@ -13,36 +15,29 @@ const emptyOrder = {
   customerName: '',
   address: '',
   eventDate: '',
+  status: '',
   returnedAt: '',
-  isCancelled: false,
+  escrow: '',
   items: []
 }
 const emptyPayment = {
+  currentBalance: '',
+  orderTotal: '',
   orderId: 0,
   amount: '',
   payConcept: '',
   payments: []
 };
-// const defaultFilters = {
-//   startDate: '',
-//   endDate: '',
-//   cancelled: false,
-//   completed: false
-// };
+const defaultFilter = 'Todas'
+
 const modalId = 'closeModalOrder';
-// const orderStatuses = {
-//   orderReceived: 'ORDEN_RECIBIDA',
-//   processingOrder: 'PROCESANDO_ORDEN',
-//   cancelled: 'ORDEN_CANCELADA',
-//   completed: 'ORDEN_COMPLETADA'
-// };
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [operation, setOperation] = useState(1);
   const [title, setTitle] = useState('');
   const [products, setProducts] = useState([]); // products = db items
-  // const [filters, setFilters] = useState(_.cloneDeep(defaultFilters));
+  const [filter, setFilter] = useState(defaultFilter);
   const [state, setState] = useState({
     myPayment: _.cloneDeep(emptyPayment),
     myOrder: _.cloneDeep(emptyOrder),
@@ -57,24 +52,27 @@ const Orders = () => {
   };
 
   const { myOrder, refresh, myPayment } = state;
-  // const {
-  //   startDate,
-  //   endDate,
-  //   cancelled,
-  //   completed
-  // } = filters;
+
   let {
     id,
     customerName,
     address,
     eventDate,
     returnedAt,
-    isCancelled,
     items
   } = myOrder;
 
+  const getOrdersUrl = function () {
+    let url = '/order';
+    if (filter !== defaultFilter) {
+      url = url.concat(`?status=${filter}`);
+    };
+
+    return url
+  };
+
   const getOrders = async function () {
-    const response = await makeRequest({ url: `/order`, method: 'get' });
+    const response = await makeRequest({ url: getOrdersUrl(), method: 'get' });
     setOrders(response);
   };
 
@@ -85,22 +83,26 @@ const Orders = () => {
 
   const getPayments = async function (orderId) {
     const response = await makeRequest({ url: `/order-payment/${orderId}`, method: 'get' });
-    myPayment.payments = response || [];
+    myPayment.currentBalance = response.currentBalance;
+    myPayment.orderTotal = response.orderTotal;
+    myPayment.payments = response.payments || [];
     setState((s) => ({
       ...s, myPayment
     }));
   };
 
-  const openModal = function ({
+  const openModal = async function ({
     op,
     id,
     customerName,
     address,
     eventDate,
     returnedAt,
-    isCancelled,
+    status,
+    escrow,
     items
   }) {
+    await getProducts();
     setOperation(op);
     if (op === operations.CREATE) {
       setTitle('Crear Orden');
@@ -114,8 +116,9 @@ const Orders = () => {
           customerName,
           address,
           eventDate,
+          status,
           returnedAt,
-          isCancelled,
+          escrow,
           items
         }
       }
@@ -142,7 +145,7 @@ const Orders = () => {
         method: 'post',
         url: '/order',
         data: {
-          customerName, address, eventDate, returnedAt, isCancelled, items
+          customerName, address, eventDate, status: ORDER_STATUSES.RECEIVED, items
         },
         alertResult: true,
         closeModal: true,
@@ -158,7 +161,7 @@ const Orders = () => {
       await makeRequest({
         method: 'put',
         url: `/order/${id}`,
-        data: { customerName, address, eventDate, returnedAt, isCancelled },
+        data: { customerName, address, eventDate, returnedAt },
         alertResult: true,
         closeModal: true,
         modalId
@@ -202,7 +205,7 @@ const Orders = () => {
         await makeRequest({
           method: 'put',
           data: {
-            isCancelled: true
+            status: ORDER_STATUSES.CANCELLED
           },
           url: `/order/${id}`
         });
@@ -215,7 +218,8 @@ const Orders = () => {
 
   const parseDate = function (date) {
     if (date) {
-      const parsedDate = new Date(date);
+      const dateWithoutMilliseconds = date.split('.')[0];
+      const parsedDate = new Date(dateWithoutMilliseconds);
       return `${parsedDate.toLocaleDateString('es-MX')} ${parsedDate.toLocaleTimeString('es-MX')}`;
     }
     return '';
@@ -230,19 +234,19 @@ const Orders = () => {
     }))
   };
 
-  // const setCancelledFilter = function (value) {
-  //   filters.cancelled = value;
-  //   setFilters(filters);
-  // };
+  const getDefaultFilter = function () {
+    return defaultFilter;
+  };
 
-  // const setCompletedFilter = function (value) {
-  //   filters.completed = value;
-  //   setFilters(filters);
-  // };
+  const isCancelled = function (orderStatus = '') {
+    return orderStatus === ORDER_STATUSES.CANCELLED;
+  };
+  const isCompleted = function(orderStatus = '') {
+    return orderStatus === ORDER_STATUSES.COMPLETED
+  };
 
   useEffect(function () {
     getOrders();
-    getProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
 
@@ -263,69 +267,25 @@ const Orders = () => {
         </div>
       </div>
       <div className='row mt-3'>
-        <div className='col'>
-          <div className='table-responsive'>
-            <table className='table table-bordered table-striped'>
-              <thead>
-                <tr className="text-center">
-                  <th>#</th>
-                  <th>Nombre del Cliente</th>
-                  <th>Dirección del Evento</th>
-                  <th>Fecha del Evento</th>
-                  <th>Fecha Devolución</th>
-                  <th>Fecha de Creación</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody className='table-group-divider'>
-                {
-                  orders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="text-center">{getOrderId(order.id)}</td>
-                      <td>{order.customerName}</td>
-                      <td>{order.address}</td>
-                      <td className='text-center'>{parseDate(order.eventDate)}</td>
-                      <td className='text-center'>{parseDate(order.returnedAt)}</td>
-                      <td className='text-center'>{parseDate(order.createdAt)}</td>
-                      <td className='text-center'>
-                        <button onClick={() => openModal({
-                          op: operations.UPDATE,
-                          id: order.id,
-                          customerName: order.customerName,
-                          address: order.address,
-                          eventDate: order.eventDate,
-                          returnedAt: order.returnedAt,
-                          isCancelled: order.isCancelled,
-                          items: order.items
-                        })}
-                          className='btn btn-primary' data-bs-toggle='modal' data-bs-target='#modalOrder'>
-                          <i className='fa-solid fa-edit'></i>
-                        </button>
-                        &nbsp;
-                        <button
-                          disabled={order.isCancelled || !!order.returnedAt}
-                          onClick={() => openPaymentModal(order.id)}
-                          className='btn btn-secondary'
-                          data-bs-toggle='modal' data-bs-target='#modalPayment'
-                        >
-                          <i className='fa-solid fa-money-bill'></i>
-                        </button>
-                        &nbsp;
-                        <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => cancelOrder(order.id, order.customerName)} className='btn btn-danger'>
-                          <i className='fa-solid fa-ban'></i>
-                        </button>
-                        &nbsp;
-                        <button disabled={order.isCancelled || !!order.returnedAt} onClick={() => deleteOrder(order.id)} className='btn btn-dark'>
-                          <i className='fa-solid fa-trash'></i>
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <TableTools
+          getDefaultFilter={getDefaultFilter}
+          setFilter={setFilter}
+          setState={setState}
+          refresh={refresh}
+        />
+      </div>
+      <div className='row mt-3'>
+        <OrdersTable
+          getOrderId={getOrderId}
+          parseDate={parseDate}
+          openModal={openModal}
+          openPaymentModal={openPaymentModal}
+          cancelOrder={cancelOrder}
+          deleteOrder={deleteOrder}
+          orders={orders}
+          isCancelled={isCancelled}
+          isCompleted={isCompleted}
+        />
       </div>
       <div>
         <ModalOrder
@@ -336,6 +296,8 @@ const Orders = () => {
           operation={operation}
           createOrderItem={createOrderItem}
           makeRequest={makeRequest}
+          isCancelled={isCancelled}
+          isCompleted={isCompleted}
           setState={setState} />
         <ModalPayment
           title={title}
